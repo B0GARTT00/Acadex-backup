@@ -17,6 +17,7 @@ class CoursesTableSeeder extends Seeder
             throw new \Exception('Required departments not found. Seed departments first.');
         }
 
+        // Regular degree programs
         Course::create([
             'course_code' => 'BSIT',
             'course_description' => 'Bachelor of Science in Information Technology',
@@ -33,6 +34,13 @@ class CoursesTableSeeder extends Seeder
             'course_code' => 'BSN',
             'course_description' => 'Bachelor of Science in Nursing',
             'department_id' => $nursing->id,
+        ]);
+
+        // Add General Education course under ASBM
+        Course::create([
+            'course_code' => 'GE',
+            'course_description' => 'General Education',
+            'department_id' => $asbm->id,
         ]);
     }
 }

@@ -29,6 +29,7 @@
                         <tr>
                             <th>Instructor Name</th>
                             <th>Email Address</th>
+                            <th class="text-center">Type</th>
                             <th class="text-center">Status</th>
                             <th class="text-center">Action</th>
                         </tr>
@@ -38,6 +39,17 @@
                             <tr>
                                 <td>{{ $instructor->last_name }}, {{ $instructor->first_name }} {{ $instructor->middle_name }}</td>
                                 <td>{{ $instructor->email }}</td>
+                                <td class="text-center">
+                                    @if($instructor->is_universal)
+                                        <span class="badge bg-blue-100 text-blue-800 px-3 py-2 rounded-pill">
+                                            GE Instructor
+                                        </span>
+                                    @else
+                                        <span class="badge bg-gray-100 text-gray-800 px-3 py-2 rounded-pill">
+                                            Department Instructor
+                                        </span>
+                                    @endif
+                                </td>
                                 <td class="text-center">
                                     <span class="badge border border-success text-success px-3 py-2 rounded-pill">
                                         Active
@@ -75,11 +87,12 @@
                 <table class="table table-bordered align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Applicant Name</th>
-                            <th>Email Address</th>
+                            <th>Name</th>
+                            <th>Email</th>
                             <th>Department</th>
                             <th>Course</th>
-                            <th class="text-center">Action</th>
+                            <th class="text-center">Type</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -87,8 +100,19 @@
                             <tr>
                                 <td>{{ $account->last_name }}, {{ $account->first_name }} {{ $account->middle_name }}</td>
                                 <td>{{ $account->email }}</td>
-                                <td>{{ $account->department?->department_code ?? 'N/A' }}</td>
-                                <td>{{ $account->course?->course_code ?? 'N/A' }}</td>
+                                <td>{{ $account->department->department_description ?? 'N/A' }}</td>
+                                <td>{{ $account->course->course_description ?? 'N/A' }}</td>
+                                <td class="text-center">
+                                    @if($account->is_universal)
+                                        <span class="badge bg-blue-100 text-blue-800 px-3 py-2 rounded-pill">
+                                            GE Instructor
+                                        </span>
+                                    @else
+                                        <span class="badge bg-gray-100 text-gray-800 px-3 py-2 rounded-pill">
+                                            Department Instructor
+                                        </span>
+                                    @endif
+                                </td>
                                 <td class="text-center">
                                     <button type="button"
                                         class="btn btn-success btn-sm d-inline-flex align-items-center gap-1"

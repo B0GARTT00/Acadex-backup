@@ -66,6 +66,9 @@
                 <select id="course_id" name="course_id" class="w-full mt-1 border-gray-300 rounded-md shadow-sm" required>
                     <option value="">-- Choose Course --</option>
                 </select>
+                <p id="ge-course-note" class="text-sm text-blue-600 mt-1 hidden">
+                    Note: Selecting "General Education" will register you as a GE Instructor
+                </p>
                 <x-input-error :messages="$errors->get('course_id')" class="mt-2" />
             </div>
 
@@ -119,6 +122,66 @@
 
     {{-- JavaScript --}}
     <script>
+        // Function to check if a course is GE
+        function isGECourse(courseCode) {
+            return courseCode === 'GE';
+        }
+
+        // Function to update course options
+        function updateCourseOptions(departmentId) {
+            const courseSelect = document.getElementById('course_id');
+            const courseWrapper = document.getElementById('course-wrapper');
+            const geNote = document.getElementById('ge-course-note');
+            
+            // Clear existing options except the first one
+            while (courseSelect.options.length > 1) {
+                courseSelect.remove(1);
+            }
+            
+            // Hide GE note by default
+            geNote.classList.add('hidden');
+            
+            if (!departmentId) {
+                courseWrapper.classList.add('opacity-0', 'h-0', 'overflow-hidden');
+                return;
+            }
+            
+            // Show loading state
+            courseWrapper.classList.remove('opacity-0', 'h-0', 'overflow-hidden');
+            courseSelect.disabled = true;
+            
+            // Fetch courses for the selected department
+            fetch(`/api/departments/${departmentId}/courses`)
+                .then(response => response.json())
+                .then(courses => {
+                    courses.forEach(course => {
+                        // Format as 'CODE - Description'
+                        const displayText = `${course.course_code} - ${course.course_description}`;
+                        const option = new Option(displayText, course.id);
+                        if (isGECourse(course.course_code)) {
+                            option.classList.add('font-semibold', 'text-blue-600');
+                        }
+                        courseSelect.add(option);
+                    });
+                    courseSelect.disabled = false;
+                });
+        }
+        
+        // Show/hide GE note based on course selection
+        document.getElementById('course_id').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const geNote = document.getElementById('ge-course-note');
+            
+            // Get the course code from the selected option's text (assuming format is 'CODE - Description')
+            const courseCode = selectedOption.text.split(' - ')[0].trim();
+            
+            if (isGECourse(courseCode)) {
+                geNote.classList.remove('hidden');
+            } else {
+                geNote.classList.add('hidden');
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', function () {
             // Email @ symbol warning
             const emailInput = document.getElementById('email');

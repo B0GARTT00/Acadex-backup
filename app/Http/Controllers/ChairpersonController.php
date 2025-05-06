@@ -25,20 +25,32 @@ class ChairpersonController extends Controller
     // Instructor Management
     // ============================
 
-    public function manageInstructors()
+    public function dashboard()
+    {
+        return redirect()->route('dashboard');
+    }
+
+    public function viewInstructors()
     {
         Gate::authorize('chairperson');
 
         $instructors = User::where('role', 0)
             ->where('department_id', Auth::user()->department_id)
+            ->where('is_universal', false)
             ->orderBy('last_name')
             ->get();
 
         $pendingAccounts = UnverifiedUser::with('department', 'course')
             ->where('department_id', Auth::user()->department_id)
+            ->where('is_universal', false)
             ->get();
 
         return view('chairperson.manage-instructors', compact('instructors', 'pendingAccounts'));
+    }
+    
+    public function manageInstructors()
+    {
+        return $this->viewInstructors();
     }
 
     public function storeInstructor(Request $request)

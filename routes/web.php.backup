@@ -154,9 +154,23 @@ Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
     Route::post('/academic-periods/generate', [AcademicPeriodController::class, 'generate'])->name('academicPeriods.generate');
 });
 
+<<<<<<< Updated upstream
+// Auth Routes
+=======
+// Chairperson Routes
+Route::prefix('chairperson')
+    ->middleware(['auth', EnsureAcademicPeriodSet::class])
+    ->name('chairperson.')
+    ->group(function () {
+        Route::get('/dashboard', [ChairpersonController::class, 'dashboard'])->name('dashboard');
+        Route::get('/instructors', [ChairpersonController::class, 'viewInstructors'])->name('instructors');
+        Route::get('/instructors/{user}/approve', [AccountApprovalController::class, 'approve'])->name('instructors.approve');
+        Route::get('/instructors/{user}/reject', [AccountApprovalController::class, 'reject'])->name('instructors.reject');
+    });
+
 // GE Coordinator Routes
 Route::prefix('ge-coordinator')
-    ->middleware(['auth', 'academic.period.set'])
+    ->middleware(['auth', EnsureAcademicPeriodSet::class])
     ->name('ge-coordinator.')
     ->group(function () {
         Route::get('/dashboard', [GECoordinatorController::class, 'dashboard'])->name('dashboard');
@@ -179,4 +193,5 @@ Route::prefix('ge-coordinator')
     });
 
 // Auth Routes (Breeze/Fortify)
+>>>>>>> Stashed changes
 require __DIR__.'/auth.php';

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
-use App\Models\{Student, Subject, TermGrade, FinalGrade};
+use App\Models\{Student, Subject, TermGrade, FinalGrade, User, Course, UnverifiedUser};
 
 class DashboardController extends Controller
 {
@@ -110,7 +110,39 @@ class DashboardController extends Controller
             if (!session()->has('active_academic_period_id')) {
                 return redirect()->route('select.academicPeriod');
             }
-            return view('dashboard.chairperson');
+            
+            $departmentId = auth()->user()->department_id;
+            
+            // Number of instructors (Full-time / Part-time)
+            $instructors = User::where('role', 0)
+                ->where('department_id', $departmentId)
+                ->where('is_universal', false)
+                ->get();
+                
+            $fullTimeCount = $instructors->where('is_fulltime', true)->count();
+            $partTimeCount = $instructors->where('is_fulltime', false)->count();
+            
+            // Total number of courses in the department
+            $totalCourses = Course::where('department_id', $departmentId)->count();
+            
+            // Total number of students per course
+            $coursesWithStudents = Course::withCount('students')
+                ->where('department_id', $departmentId)
+                ->get();
+                
+            // Number of students per year level
+            $yearLevels = Student::selectRaw('year_level, COUNT(*) as count')
+                ->groupBy('year_level')
+                ->orderBy('year_level')
+                ->pluck('count', 'year_level');
+            
+            return view('dashboard.chairperson', [
+                'fullTimeCount' => $fullTimeCount,
+                'partTimeCount' => $partTimeCount,
+                'totalCourses' => $totalCourses,
+                'coursesWithStudents' => $coursesWithStudents,
+                'yearLevels' => $yearLevels
+            ]);
         }
 
         if (Gate::allows('admin')) {
@@ -119,6 +151,46 @@ class DashboardController extends Controller
 
         if (Gate::allows('dean')) {
             return view('dashboard.dean');
+        }
+
+        if (Gate::allows('ge_coordinator')) {
+            if (!session()->has('active_academic_period_id')) {
+                return redirect()->route('select.academicPeriod');
+            }
+            
+            $instructorCount = User::where('role', 0) // Instructor role
+                ->whereHas('subjects', function($query) {
+                    $query->where('is_universal', true);
+                })
+                ->count();
+
+            $studentCount = Student::whereHas('subjects', function($query) {
+                    $query->where('is_universal', true);
+                })
+                ->count();
+
+            $subjectCount = Subject::where('is_universal', true)->count();
+
+
+            $pendingInstructors = UnverifiedUser::with('department', 'course')
+                ->where('is_universal', true)
+                ->get();
+
+            $recentStudents = Student::whereHas('subjects', function($query) {
+                    $query->where('is_universal', true);
+                })
+                ->with('course')
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get();
+
+            return view('dashboard.ge-coordinator', [
+                'instructorCount' => $instructorCount,
+                'studentCount' => $studentCount,
+                'subjectCount' => $subjectCount,
+                'recentStudents' => $recentStudents,
+                'pendingInstructors' => $pendingInstructors
+            ]);
         }
 
         abort(403, 'Unauthorized access.');

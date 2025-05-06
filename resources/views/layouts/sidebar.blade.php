@@ -1,3 +1,4 @@
+@php $role = Auth::user()->role; @endphp
 <div class="d-flex flex-column flex-shrink-0 p-3 text-white" style="width: 250px; background-color: #2e9c5e; min-height: 100vh;">
     <!-- Logo -->
     <a href="{{ route('dashboard') }}" class="d-flex align-items-center mb-3 text-white text-decoration-none">
@@ -7,10 +8,18 @@
 
     <hr class="border-white-50">
 
-    <!-- Always visible Dashboard link -->
+    <!-- Dashboard link -->
     <ul class="nav nav-pills flex-column mb-4">
         <li>
-            <a href="{{ route('dashboard') }}" class="nav-link text-white {{ request()->routeIs('dashboard') ? 'active bg-success' : '' }}">
+            @if($role === 0) <!-- Instructor -->
+                <a href="{{ route('instructor.dashboard') }}" class="nav-link text-white {{ request()->routeIs('instructor.dashboard') ? 'active bg-success' : '' }}">
+            @elseif($role === 1) <!-- Chairperson -->
+                <a href="{{ route('chairperson.dashboard') }}" class="nav-link text-white {{ request()->routeIs('chairperson.dashboard') ? 'active bg-success' : '' }}">
+            @elseif($role === 4) <!-- GE Coordinator -->
+                <a href="{{ route('ge-coordinator.dashboard') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.dashboard') ? 'active bg-success' : '' }}">
+            @else <!-- Default/Admin -->
+                <a href="{{ route('dashboard') }}" class="nav-link text-white {{ request()->routeIs('dashboard') ? 'active bg-success' : '' }}">
+            @endif
                 <div class="d-flex align-items-center">
                     <span class="me-2" style="width: 20px;">🏠</span> Dashboard
                 </div>
@@ -18,7 +27,7 @@
         </li>
     </ul>
 
-    @php $role = Auth::user()->role; @endphp
+
 
     {{-- Instructor --}}
     @if ($role === 0)
@@ -127,6 +136,34 @@
                 <a href="{{ route('dean.grades') }}" class="nav-link text-white {{ request()->routeIs('dean.grades') ? 'active bg-success' : '' }}">
                     <div class="d-flex align-items-center">
                         <span class="me-2" style="width: 20px;">📈</span> View Grades
+                    </div>
+                </a>
+            </li>
+        </ul>
+    @endif
+
+    {{-- GE Coordinator --}}
+    @if ($role === 4)
+        <h6 class="text-uppercase fw-bold text-white-50 px-2 mb-3">GE Coordinator</h6>
+        <ul class="nav nav-pills flex-column mb-4">
+            <li>
+                <a href="{{ route('ge-coordinator.instructors') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.instructors*') ? 'active bg-success' : '' }}">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 20px;">👥</span> Manage GE Instructors
+                    </div>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('ge-coordinator.assign.subjects') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.assign.subjects*') ? 'active bg-success' : '' }}">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 20px;">📚</span> Assign GE Subjects
+                    </div>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('ge-coordinator.grades') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.grades*') ? 'active bg-success' : '' }}">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 20px;">📈</span> View GE Grades
                     </div>
                 </a>
             </li>
