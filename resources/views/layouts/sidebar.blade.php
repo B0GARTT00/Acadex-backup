@@ -14,7 +14,7 @@
             @if($role === 0) <!-- Instructor -->
                 <a href="{{ route('instructor.dashboard') }}" class="nav-link text-white {{ request()->routeIs('instructor.dashboard') ? 'active bg-success' : '' }}">
             @elseif($role === 1) <!-- Chairperson -->
-                <a href="{{ route('chairperson.dashboard') }}" class="nav-link text-white {{ request()->routeIs('chairperson.dashboard') ? 'active bg-success' : '' }}">
+                <a href="{{ route('dashboard') }}" class="nav-link text-white {{ request()->routeIs('dashboard') ? 'active bg-success' : '' }}">
             @elseif($role === 4) <!-- GE Coordinator -->
                 <a href="{{ route('ge-coordinator.dashboard') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.dashboard') ? 'active bg-success' : '' }}">
             @else <!-- Default/Admin -->
@@ -164,6 +164,13 @@
                 <a href="{{ route('ge-coordinator.grades') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.grades*') ? 'active bg-success' : '' }}">
                     <div class="d-flex align-items-center">
                         <span class="me-2" style="width: 20px;">📈</span> View GE Grades
+                    </div>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('ge-coordinator.subjects.import') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.subjects.import*') ? 'active bg-success' : '' }}">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 20px;">📥</span> Import GE Subjects
                     </div>
                 </a>
             </li>

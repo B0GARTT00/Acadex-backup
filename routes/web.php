@@ -170,12 +170,14 @@ Route::prefix('ge-coordinator')
         
         // GE Subjects Management
         Route::get('/subjects', [GECoordinatorController::class, 'subjects'])->name('subjects.index');
+        Route::get('/subjects/import', [GECoordinatorController::class, 'importSubjects'])->name('subjects.import');
         Route::get('/subjects/create', [GECoordinatorController::class, 'createSubject'])->name('subjects.create');
         Route::post('/subjects', [GECoordinatorController::class, 'storeSubject'])->name('subjects.store');
         Route::get('/subjects/{subject}/edit', [GECoordinatorController::class, 'editSubject'])->name('subjects.edit');
         Route::put('/subjects/{subject}', [GECoordinatorController::class, 'updateSubject'])->name('subjects.update');
         Route::match(['post', 'delete'], '/instructors/{id}/reject', [GECoordinatorController::class, 'rejectInstructor'])->name('instructors.reject');
-        Route::post('/instructors/deactivate/{id}', [GECoordinatorController::class, 'deactivateInstructor'])->name('instructors.deactivate');
+        Route::patch('/instructors/deactivate/{id}', [GECoordinatorController::class, 'deactivateInstructor'])->name('instructors.deactivate');
+        Route::patch('/instructors/activate/{id}', [GECoordinatorController::class, 'activateInstructor'])->name('instructors.activate');
     });
 
 // Auth Routes (Breeze/Fortify)

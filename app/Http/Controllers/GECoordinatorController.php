@@ -175,6 +175,20 @@ class GECoordinatorController extends Controller
     }
 
     /**
+     * Activate an instructor.
+     */
+    public function activateInstructor($id)
+    {
+        $instructor = User::where('id', $id)
+            ->where('role', 0) // Instructor role
+            ->firstOrFail();
+
+        $instructor->update(['is_active' => true]);
+
+        return redirect()->back()->with('success', 'Instructor activated successfully.');
+    }
+
+    /**
      * Store a newly created instructor in storage.
      */
     public function store(Request $request)

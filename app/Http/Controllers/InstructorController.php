@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Subject;
 use App\Models\Course;
 use App\Models\TermGrade;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -21,8 +22,85 @@ class InstructorController extends Controller
     {
         Gate::authorize('instructor');
         $instructor = Auth::user();
+        
+        // Initialize default values
+        $instructorStudents = 0;
+        $enrolledSubjectsCount = 0;
+        $totalPassedStudents = 0;
+        $totalFailedStudents = 0;
+        $termCompletions = [
+            'prelim' => ['graded' => 0, 'total' => 0],
+            'midterm' => ['graded' => 0, 'total' => 0],
+            'prefinal' => ['graded' => 0, 'total' => 0],
+            'final' => ['graded' => 0, 'total' => 0]
+        ];
+        $subjectCharts = [];
+        
+        // Get the instructor's subjects for the current academic period
+        $academicPeriodId = session('active_academic_period_id');
+        
+        if ($academicPeriodId) {
+            // Get the instructor's subjects with eager loading of students and grades
+            $subjects = $instructor->subjects()
+                ->where('academic_period_id', $academicPeriodId)
+                ->where('is_deleted', false)
+                ->with(['students', 'grades'])
+                ->get();
+                
+            // Count unique students across all subjects
+            $instructorStudents = $subjects->flatMap(function($subject) {
+                return $subject->students;
+            })->unique('id')->count();
+            
+            $enrolledSubjectsCount = $subjects->count();
+            
+            // Initialize term completions and prepare subject charts data
+            foreach ($subjects as $subject) {
+                $totalStudents = $subject->students->count();
+                $subjectChart = [
+                    'code' => $subject->subject_code,
+                    'description' => $subject->description,
+                    'terms' => [],
+                    'termPercentages' => []
+                ];
+                
+                foreach (['prelim', 'midterm', 'prefinal', 'final'] as $term) {
+                    $termCompletions[$term]['total'] += $totalStudents;
+                    
+                    // Count how many students have grades for this term
+                    $gradedCount = $subject->grades
+                        ->where('term', $term)
+                        ->count();
+                        
+                    $termCompletions[$term]['graded'] += $gradedCount;
+                    
+                    // Calculate percentage for this term
+                    $percentage = $totalStudents > 0 ? round(($gradedCount / $totalStudents) * 100) : 0;
+                    
+                    // Add data for subject chart
+                    $subjectChart['terms'][$term] = [
+                        'graded' => $gradedCount,
+                        'total' => $totalStudents,
+                        'percentage' => $percentage
+                    ];
+                    
+                    // Add to term percentages for chart
+                    $subjectChart['termPercentages'][] = $percentage;
+                }
+                
+                $subjectCharts[] = $subjectChart;
+            }
+        }
 
-        return view('instructor.dashboard', compact('instructor'));
+        return view('dashboard.instructor', compact(
+            'instructor',
+            'instructorStudents',
+            'enrolledSubjectsCount',
+            'totalPassedStudents',
+            'totalFailedStudents',
+            'termCompletions',
+            'subjectCharts'
+        ));
     }
 
     // Manage Students Page (with subject grade status labels)

@@ -150,7 +150,54 @@ class DashboardController extends Controller
         }
 
         if (Gate::allows('dean')) {
-            return view('dashboard.dean');
+            if (!session()->has('active_academic_period_id')) {
+                return redirect()->route('select.academicPeriod');
+            }
+
+            // Get total students count
+            $studentCount = Student::where('is_deleted', 0)->count();
+            // Get total instructors count
+            $instructorCount = User::where('role', 0)->count();
+            // Get total courses count
+            $courseCount = Course::count();
+            // Get total departments count
+            $departmentCount = \App\Models\Department::count();
+
+            // Get recent activities (sample data - replace with actual data)
+            $recentActivities = [
+                [
+                    'type' => 'user',
+                    'icon' => 'fa-user-plus',
+                    'description' => 'New student registered',
+                    'time' => '2 minutes ago'
+                ],
+                [
+                    'type' => 'course',
+                    'icon' => 'fa-book',
+                    'description' => 'New course added',
+                    'time' => '1 hour ago'
+                ],
+                [
+                    'type' => 'grade',
+                    'icon' => 'fa-star',
+                    'description' => 'Grades updated for CS101',
+                    'time' => '3 hours ago'
+                ],
+                [
+                    'type' => 'announcement',
+                    'icon' => 'fa-bullhorn',
+                    'description' => 'New announcement posted',
+                    'time' => '1 day ago'
+                ],
+            ];
+
+            return view('dashboard.dean', [
+                'studentCount' => $studentCount,
+                'instructorCount' => $instructorCount,
+                'courseCount' => $courseCount,
+                'departmentCount' => $departmentCount,
+                'recentActivities' => $recentActivities
+            ]);
         }
 
         if (Gate::allows('ge_coordinator')) {
