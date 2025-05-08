@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Activity;
+
 use App\Models\AcademicPeriod;
 use App\Models\Course;
 use App\Models\Department;
@@ -62,6 +64,38 @@ class AdminController extends Controller
     // Courses
     // ============================
 
+    public static function dashboard()
+    {
+        $user = auth()->user();
+        if ($user->role !== 3) {
+            abort(403, 'Unauthorized');
+        }
+
+        $departments = Department::where('is_deleted', false)->get();
+        $courses = Course::where('is_deleted', false)->get();
+        $subjects = Subject::where('is_deleted', false)->get();
+        // Get the most recent academic period
+        $activePeriod = AcademicPeriod::where('is_deleted', false)
+            ->orderBy('academic_year', 'desc')
+            ->orderByRaw("FIELD(semester, '1st', '2nd', 'Summer')")
+            ->first();
+
+        // Get recent activities (last 30 days)
+        $recentActivities = Activity::where('created_at', '>=', now()->subDays(30))
+            ->whereIn('type', ['department', 'course', 'subject', 'academic_period'])
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        return view('dashboard.admin', compact(
+            'departments',
+            'courses',
+            'subjects',
+            'activePeriod',
+            'recentActivities'
+        ));
+    }
+
     public function courses()
     {
         Gate::authorize('admin');
@@ -70,7 +104,11 @@ class AdminController extends Controller
             ->orderBy('course_code')
             ->get();
 
-        return view('admin.courses', compact('courses'));
+        $departments = Department::where('is_deleted', false)
+            ->orderBy('department_code')
+            ->get();
+
+        return view('admin.courses', compact('courses', 'departments'));
     }
 
     public function createCourse()

@@ -59,7 +59,21 @@ Route::middleware('auth')->group(function () {
 });
 
 // Dashboard
-Route::get('/dashboard', [DashboardController::class, 'index'])
+Route::get('/dashboard', function () {
+    $user = auth()->user();
+    if ($user->role === 0) { // Instructor
+        return redirect()->route('instructor.dashboard');
+    } elseif ($user->role === 1) { // Chairperson
+        return redirect()->route('chairperson.dashboard');
+    } elseif ($user->role === 2) { // Dean
+        return redirect()->route('dean.dashboard');
+    } elseif ($user->role === 3) { // Admin
+        return AdminController::dashboard();
+    } elseif ($user->role === 4) { // GE Coordinator
+        return redirect()->route('ge-coordinator.dashboard');
+    }
+    return redirect()->route('dashboard');
+})
     ->middleware(['auth', 'verified', 'academic.period.set'])
     ->name('dashboard');
 
@@ -171,6 +185,8 @@ Route::prefix('ge-coordinator')
         // GE Subjects Management
         Route::get('/subjects', [GECoordinatorController::class, 'subjects'])->name('subjects.index');
         Route::get('/subjects/import', [GECoordinatorController::class, 'importSubjects'])->name('subjects.import');
+        Route::get('/subjects/{curriculum}/fetch', [GECoordinatorController::class, 'fetchSubjects'])->name('subjects.fetch');
+        Route::post('/subjects/confirm', [GECoordinatorController::class, 'confirmSubjects'])->name('subjects.confirm');
         Route::get('/subjects/create', [GECoordinatorController::class, 'createSubject'])->name('subjects.create');
         Route::post('/subjects', [GECoordinatorController::class, 'storeSubject'])->name('subjects.store');
         Route::get('/subjects/{subject}/edit', [GECoordinatorController::class, 'editSubject'])->name('subjects.edit');

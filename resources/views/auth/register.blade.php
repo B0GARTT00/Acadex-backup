@@ -66,12 +66,6 @@
                 <select id="course_id" name="course_id" class="w-full mt-1 border-gray-300 rounded-md shadow-sm" required>
                     <option value="">-- Choose Course --</option>
                 </select>
-                <div id="ge-course-note" class="mt-2 p-2 bg-blue-50 text-blue-700 hidden" style="transition: opacity 0.3s ease-in-out;">
-                    <p class="text-sm font-medium">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Note: Selecting "General Education" will register you as a GE Instructor
-                    </p>
-                </div>
                 <x-input-error :messages="$errors->get('course_id')" class="mt-2" />
             </div>
 
@@ -125,126 +119,10 @@
 
 {{-- JavaScript --}}
 <script>
-    // Function to check if a course is GE
-    function isGECourse(courseCode) {
-        return courseCode === 'GE';
-    }
-
-    // Function to update course options
-    function updateCourseOptions(departmentId) {
-        const courseSelect = document.getElementById('course_id');
-        const courseWrapper = document.getElementById('course-wrapper');
-        const geNote = document.getElementById('ge-course-note');
-        
-        console.log('Updating courses for department:', departmentId, 'Course wrapper:', courseWrapper);
-        
-        // Clear existing options except the first one
-        courseSelect.innerHTML = '<option value="">-- Choose Course --</option>';
-        
-        // Ensure course wrapper is visible when department is selected
-        if (departmentId) {
-            courseWrapper.style.display = 'block';
-        } else {
-            courseWrapper.style.display = 'none';
-            return;
-        }
-        
-        // Hide GE note by default
-        geNote.classList.add('hidden');
-        
-        if (!departmentId) {
-            courseWrapper.classList.add('opacity-0', 'h-0', 'overflow-hidden');
-            return;
-        }
-        
-        // Show course select
-        courseWrapper.classList.remove('opacity-0', 'h-0', 'overflow-hidden');
-        courseSelect.disabled = true;
-        
-        // Show loading state
-        const loadingOption = new Option('Loading courses...', '');
-        loadingOption.disabled = true;
-        courseSelect.add(loadingOption);
-        
-        // Fetch courses for the selected department
-        const apiUrl = `/api/department/${departmentId}/courses`;
-        console.log('Fetching courses from:', apiUrl);
-        
-        fetch(apiUrl)
-            .then(response => {
-                console.log('API response status:', response.status);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(courses => {
-                console.log('Received courses data:', courses);
-                // Clear loading option
-                courseSelect.innerHTML = '<option value="">-- Choose Course --</option>';
-                
-                if (courses && courses.length > 0) {
-                    // Add courses
-                    courses.forEach(course => {
-                        console.log('Processing course:', course);
-                        // Format as 'CODE - Description'
-                        const displayText = course.name || course.course_description || `Course ${course.id}`;
-                        const option = new Option(displayText, course.id);
-                        // No special styling for General Education courses                            courseSelect.add(option);
-                        });
-                    } else {
-                        console.log('No courses found for department:', departmentId);
-                        const option = new Option('No courses available', '');
-                        option.disabled = true;
-                        courseSelect.add(option);
-                    }
-                    
-                    courseSelect.disabled = false;
-                    console.log('Course select options updated. Total options:', courseSelect.options.length);
-                })
-                .catch(error => {
-                    console.error('Error loading courses:', error);
-                    courseSelect.innerHTML = '<option value="">Error loading courses</option>';
-                    courseSelect.disabled = false;
-                });
-        }
-        
-        // Show/hide GE note based on course selection
-        document.getElementById('course_id').addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const geNote = document.getElementById('ge-course-note');
-            
-            console.log('Course selected. Value:', selectedOption.value, 'Text:', selectedOption.text);
-            
-            if (!selectedOption.value) {
-                console.log('No course selected, hiding GE note');
-                geNote.classList.add('hidden');
-                return;
-            }
-            
-            // Check if the course is General Education
-            const courseText = selectedOption.text.trim();
-            const isGE = courseText.includes('General Education');
-            
-            console.log('Course text:', courseText, 'Is GE:', isGE);
-            
-            if (isGE) {
-                console.log('GE course selected, showing note');
-                geNote.classList.remove('hidden');
-                // Force a reflow to ensure the transition works
-                void geNote.offsetWidth;
-                geNote.style.opacity = '1';
-            } else {
-                console.log('Non-GE course selected, hiding note');
-                geNote.classList.add('hidden');
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', function () {
-            // Email @ symbol warning
-            const emailInput = document.getElementById('email');
-            const emailWarning = document.getElementById('email-warning');
->>>>>>> 91b04b0babe00ff66c4ad2a3dc8a4aee73bdf4df
+    document.addEventListener('DOMContentLoaded', function () {
+        // Email @ symbol warning
+        const emailInput = document.getElementById('email');
+        const emailWarning = document.getElementById('email-warning');
 
         emailInput.addEventListener('input', () => {
             const hasAtSymbol = emailInput.value.includes('@');
@@ -258,7 +136,6 @@
             }
         });
 
-<<<<<<< HEAD
         // Department -> Course cascade with auto-select if only 1 course
         const deptSelect = document.getElementById('department_id');
         const courseSelect = document.getElementById('course_id');
@@ -267,44 +144,30 @@
         deptSelect.addEventListener('change', function () {
             const deptId = this.value;
             if (!deptId) {
-                courseWrapper.classList.add('hidden');
+                courseWrapper.style.display = 'none';
                 courseSelect.innerHTML = '<option value="">-- Choose Course --</option>';
                 return;
             }
 
+            courseWrapper.style.display = 'block';
             courseSelect.innerHTML = '<option value="">Loading...</option>';
+            
             fetch(`/api/department/${deptId}/courses`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.length === 1) {
                         // Auto-select and hide course selection
                         courseSelect.innerHTML = `<option value="${data[0].id}" selected>${data[0].name}</option>`;
-                        courseWrapper.classList.add('hidden');
+                        courseWrapper.style.display = 'none';
                     } else {
                         // Show dropdown with options
                         courseSelect.innerHTML = '<option value="">-- Choose Course --</option>';
                         data.forEach(course => {
                             courseSelect.innerHTML += `<option value="${course.id}">${course.name}</option>`;
                         });
-                        courseWrapper.classList.remove('hidden');
+                        courseWrapper.style.display = 'block';
                     }
                 });
-=======
-            // Add event listener for department select change
-            const deptSelect = document.getElementById('department_id');
-            console.log('Department select element:', deptSelect);
-            
-            deptSelect.addEventListener('change', function() {
-                console.log('Department changed to:', this.value);
-                updateCourseOptions(this.value);
-            });
-            
-            // Debug: Check initial state
-            console.log('Initial department value:', deptSelect.value);
-            if (deptSelect.value) {
-                updateCourseOptions(deptSelect.value);
-            }
->>>>>>> 91b04b0babe00ff66c4ad2a3dc8a4aee73bdf4df
         });
     });
 

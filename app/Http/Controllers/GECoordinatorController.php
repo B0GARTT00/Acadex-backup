@@ -189,6 +189,100 @@ class GECoordinatorController extends Controller
     }
 
     /**
+     * Display the form for importing GE subjects from curriculum.
+     */
+    public function importSubjects()
+    {
+        $curriculums = \App\Models\Curriculum::with('course')->get();
+        
+        // Debug: Log the curriculums
+        \Log::info('Curriculums:', ['curriculums' => $curriculums->toArray()]);
+        
+        return view('ge-coordinator.import-subjects', compact('curriculums'));
+    }
+
+
+
+    /**
+     * Fetch subjects from a curriculum.
+     */
+    public function fetchSubjects($curriculumId)
+    {
+        $subjects = \App\Models\CurriculumSubject::where('curriculum_id', $curriculumId)
+            ->with(['curriculum.course'])
+            ->get()
+            ->map(function ($curriculumSubject) {
+                // Determine if this is a GE subject based on subject code
+                $isGE = false;
+                if (strtoupper(substr($curriculumSubject->subject_code, 0, 2)) === 'GE') {
+                    $isGE = true;
+                } elseif (in_array(strtoupper($curriculumSubject->subject_code), [
+                    'NSTP 1', 'NSTP 2', 'PE 1', 'PE 2', 'PD 1', 'PD 2', 'RS 1', 'RS 2'
+                ])) {
+                    $isGE = true;
+                }
+
+                return [
+                    'id' => $curriculumSubject->id,
+                    'subject_code' => $curriculumSubject->subject_code,
+                    'subject_description' => $curriculumSubject->subject_description,
+                    'year_level' => $curriculumSubject->year_level,
+                    'semester' => $curriculumSubject->semester,
+                    'curriculum' => $curriculumSubject->curriculum->name,
+                    'course' => $curriculumSubject->curriculum->course->course_code ?? 'N/A',
+                    'is_universal' => $isGE
+                ];
+            });
+
+        return response()->json($subjects);
+    }
+
+    /**
+     * Confirm and import selected GE subjects.
+     */
+    public function confirmSubjects(Request $request)
+    {
+        $request->validate([
+            'curriculum_id' => 'required|exists:curriculums,id',
+            'subject_ids' => 'required|array',
+        ]);
+
+        $academicPeriodId = session('active_academic_period_id');
+
+        DB::beginTransaction();
+        try {
+            $subjects = \App\Models\CurriculumSubject::where('curriculum_id', $request->curriculum_id)
+                ->whereIn('id', $request->subject_ids)
+                ->get();
+
+            foreach ($subjects as $curriculumSubject) {
+                \App\Models\Subject::firstOrCreate([
+                    'subject_code' => $curriculumSubject->subject_code,
+                    'academic_period_id' => $academicPeriodId
+                ], [
+                    'subject_description' => $curriculumSubject->subject_description,
+                    'year_level' => $curriculumSubject->year_level,
+                    'semester' => $curriculumSubject->semester,
+                    'department_id' => null,
+                    'course_id' => null,
+                    'is_universal' => true,
+                    'is_deleted' => false,
+                    'created_by' => auth()->id(),
+                    'updated_by' => auth()->id(),
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->route('ge-coordinator.assign-subjects')
+                ->with('success', 'GE subjects imported successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Failed to import subjects: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Store a newly created instructor in storage.
      */
     public function store(Request $request)
@@ -271,14 +365,14 @@ class GECoordinatorController extends Controller
         $academicPeriodId = session('active_academic_period_id');
 
         // Get all GE subjects for the current academic period
-        $subjects = Subject::where('is_universal', true)
+        $subjects = \App\Models\Subject::where('is_universal', true)
             ->where('is_deleted', false)
             ->where('academic_period_id', $academicPeriodId)
             ->orderBy('subject_code')
             ->get();
 
         // Get all active GE instructors
-        $instructors = User::where('role', 0)
+        $instructors = \App\Models\User::where('role', 0)
             ->where('is_universal', true)
             ->where('is_active', true)
             ->orderBy('last_name')
@@ -300,13 +394,13 @@ class GECoordinatorController extends Controller
         ]);
 
         // Verify the subject is a GE subject
-        $subject = Subject::where('id', $request->subject_id)
+        $subject = \App\Models\Subject::where('id', $request->subject_id)
             ->where('is_universal', true)
             ->where('academic_period_id', $academicPeriodId)
             ->firstOrFail();
 
         // Verify the instructor is a GE instructor
-        $instructor = User::where('id', $request->instructor_id)
+        $instructor = \App\Models\User::where('id', $request->instructor_id)
             ->where('role', 0)
             ->where('is_universal', true)
             ->where('is_active', true)

@@ -16,6 +16,7 @@ class CurriculumSubject extends Model
         'year_level',
         'semester',
         'is_deleted',
+        'is_universal',
     ];
 
     public function curriculum()

@@ -90,12 +90,14 @@ class CurriculumSeeder extends Seeder
         ];
 
         foreach ($subjects as [$year, $sem, $code, $desc]) {
+            $is_universal = substr($code, 0, 2) === 'GE';
             CurriculumSubject::create([
                 'curriculum_id' => $curriculum->id,
                 'subject_code' => $code,
                 'subject_description' => $desc,
                 'year_level' => $year,
                 'semester' => $sem,
+                'is_universal' => $is_universal,
             ]);
         }
     }
