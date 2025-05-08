@@ -26,7 +26,7 @@ class DepartmentsTableSeeder extends Seeder
 
         Department::create([
             'department_code' => 'ALLIED',
-            'department_description' => 'Allied Healh',
+            'department_description' => 'Allied Health',
         ]);
     }
 }

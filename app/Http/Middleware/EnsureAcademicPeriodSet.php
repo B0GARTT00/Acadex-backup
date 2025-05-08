@@ -12,7 +12,7 @@ class EnsureAcademicPeriodSet
     {
         if (
             Auth::check() &&
-            Auth::user()->role === 0 && // Instructor
+            in_array(Auth::user()->role, [0, 4]) && // Instructor or GE Coordinator
             !session()->has('active_academic_period_id') &&
             !$request->is('select-academic-period') &&
             !$request->is('set-academic-period')
