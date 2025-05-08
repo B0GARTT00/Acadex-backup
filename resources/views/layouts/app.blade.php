@@ -7,7 +7,7 @@
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
-    <!-- Bootstrap CSS (latest version only) -->
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
@@ -17,17 +17,18 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #EAF8E7;
         }
         [x-cloak] {
             display: none !important;
         }
     </style>
 </head>
-<body class="bg-light text-dark">
+<body class="text-dark">
 
     <div class="d-flex min-vh-100">
         <!-- Sidebar -->
-        <aside class="bg-white shadow-sm border-end d-flex flex-column" style="width: 16rem;">
+        <aside class="shadow-sm border-end d-flex flex-column" style="width: 16rem; background-color: #259c59;">
             @include('layouts.sidebar')
         </aside>
 
@@ -37,7 +38,7 @@
             @include('layouts.navigation')
 
             <!-- Page Content -->
-            <main class="flex-grow-1 overflow-auto p-4" style="background-color: #EAF8E7;">
+            <main class="flex-grow-1 overflow-auto p-4">
                 @yield('content')
             </main>
         </div>

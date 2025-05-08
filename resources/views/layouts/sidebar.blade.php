@@ -1,5 +1,5 @@
 @php $role = Auth::user()->role; @endphp
-<div class="d-flex flex-column flex-shrink-0 p-3 text-white" style="width: 250px; background-color: #2e9c5e; min-height: 100vh;">
+<div class="d-flex flex-column flex-shrink-0 p-3 text-white" style="width: 250px; background-color: #259c59; min-height: 100vh;">
     <!-- Logo -->
     <a href="{{ route('dashboard') }}" class="d-flex align-items-center mb-3 text-white text-decoration-none">
         <img src="{{ asset('logo.png') }}" alt="Logo" style="width: 28px; height: 28px;" class="me-2">
@@ -36,15 +36,8 @@
             <li>
                 <a href="{{ route('instructor.students.index') }}"
                 class="nav-link text-white {{ request()->routeIs('instructor.students.index') ? 'active bg-success' : '' }}">
-                                 <div class="d-flex align-items-center">
-                        <span class="me-2" style="width: 20px;">🎓</span> Manage Students
-                    </div>
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('instructor.students.import') }}" class="nav-link text-white {{ request()->routeIs('instructor.students.import') ? 'active bg-success' : '' }}">
                     <div class="d-flex align-items-center">
-                        <span class="me-2" style="width: 20px;">📤</span> Import Student List
+                        <span class="me-2" style="width: 20px;">🎓</span> Manage Students
                     </div>
                 </a>
             </li>
@@ -66,6 +59,19 @@
                 <a href="{{ route('instructor.final-grades.index') }}" class="nav-link text-white {{ request()->routeIs('instructor.final-grades.*') ? 'active bg-success' : '' }}">
                     <div class="d-flex align-items-center">
                         <span class="me-2" style="width: 20px;">📈</span> Final Grades
+                    </div>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Import Section for Instructor -->
+        <hr class="border-white-50">
+        <h6 class="text-uppercase fw-bold text-white-50 px-2 mb-3">Import Section</h6>
+        <ul class="nav nav-pills flex-column mb-4">
+            <li>
+                <a href="{{ route('instructor.students.import') }}" class="nav-link text-white {{ request()->routeIs('instructor.students.import') ? 'active bg-success' : '' }}">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 20px;">📤</span> Import Student
                     </div>
                 </a>
             </li>
@@ -104,6 +110,12 @@
                     </div>
                 </a>
             </li>
+        </ul>
+
+        <!-- Imports Section for Chairperson -->
+        <hr class="border-white-50">
+        <h6 class="text-uppercase fw-bold text-white-50 px-2 mb-3">Import Section</h6>
+        <ul class="nav nav-pills flex-column mb-4">
             <li>
                 <a href="{{ route('curriculum.selectSubjects') }}" class="nav-link text-white {{ request()->routeIs('curriculum.selectSubjects') ? 'active bg-success' : '' }}">
                     <div class="d-flex align-items-center">
@@ -203,34 +215,12 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('admin.academicPeriods') }}" class="nav-link text-white {{ request()->routeIs('admin.academicPeriods') ? 'active bg-success' : '' }}">
+                <a href="{{ route('admin.users') }}" class="nav-link text-white {{ request()->routeIs('admin.users') ? 'active bg-success' : '' }}">
                     <div class="d-flex align-items-center">
-                        <span class="me-2" style="width: 20px;">📅</span> Academic Periods
-                    </div>
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('instructor.students.import') }}" class="nav-link text-white {{ request()->routeIs('instructor.students.import') ? 'active bg-success' : '' }}">
-                    <div class="d-flex align-items-center">
-                        <span class="me-2" style="width: 20px;">📤</span> Import Student List
+                        <span class="me-2" style="width: 20px;">👤</span> Users
                     </div>
                 </a>
             </li>
         </ul>
     @endif
-
-    <!-- Logout -->
-    <hr class="border-white-50 mt-auto">
-    <ul class="nav nav-pills flex-column mt-2">
-        <li>
-            <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                @csrf
-                <button type="submit" class="nav-link text-white border-0 bg-transparent p-0">
-                    <div class="d-flex align-items-center">
-                        <span class="me-2" style="width: 20px;">🚪</span> Logout
-                    </div>
-                </button>
-            </form>
-        </li>
-    </ul>
 </div>
