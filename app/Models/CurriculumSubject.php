@@ -16,10 +16,16 @@ class CurriculumSubject extends Model
         'year_level',
         'semester',
         'is_deleted',
+        'is_universal',
     ];
 
     public function curriculum()
     {
         return $this->belongsTo(Curriculum::class);
+    }
+
+    public function subject()
+    {
+        return $this->belongsTo(Subject::class, 'subject_code', 'subject_code');
     }
 }

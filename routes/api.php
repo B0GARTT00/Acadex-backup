@@ -20,7 +20,7 @@ Route::get('/department/{id}/courses', function ($id) {
     return $department->courses->map(function ($course) {
         return [
             'id' => $course->id,
-            'name' => $course->course_description, // used by the JS dropdown
+            'name' => $course->course_description,
         ];
     });
 });

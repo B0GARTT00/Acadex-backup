@@ -4,13 +4,12 @@
 <div class="container mx-auto px-4">
     <h1 class="text-2xl font-bold mb-6">Manage Academic Periods</h1>
 
-    {{-- Generate Button --}}
-    <form method="POST" action="{{ route('admin.academicPeriods.generate') }}">
-        @csrf
-        <button type="submit" class="mb-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
-            Generate New Academic Period
-        </button>
-    </form>
+    <button type="button" 
+            class="mb-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
+            data-bs-toggle="modal" 
+            data-bs-target="#addAcademicPeriodModal">
+        Add Academic Period
+    </button>
 
     {{-- Periods Table --}}
     <div class="overflow-x-auto">
@@ -32,6 +31,51 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Add Academic Period Modal -->
+<div class="modal fade" id="addAcademicPeriodModal" tabindex="-1" aria-labelledby="addAcademicPeriodModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAcademicPeriodModalLabel">Add New Academic Period</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/academic-periods" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <label for="academic_year" class="block text-sm font-medium text-gray-700">Academic Year</label>
+                        <input type="text" name="academic_year" id="academic_year" 
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                               required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="semester" class="block text-sm font-medium text-gray-700">Semester</label>
+                        <select name="semester" id="semester" 
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                required>
+                            <option value="">Select Semester</option>
+                            <option value="first">First Semester</option>
+                            <option value="second">Second Semester</option>
+                            <option value="summer">Summer Term</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="is_active" class="block text-sm font-medium text-gray-700">Is Active</label>
+                        <div class="mt-1">
+                            <input type="checkbox" name="is_active" id="is_active" value="1" 
+                                   class="form-checkbox h-5 w-5 text-indigo-600 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Academic Period</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 @endsection

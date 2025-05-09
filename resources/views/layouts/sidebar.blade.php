@@ -1,3 +1,4 @@
+@php $role = Auth::user()->role; @endphp
 <div class="d-flex flex-column flex-shrink-0 p-3 text-white" style="width: 250px; background-color: #259c59; min-height: 100vh;">
     <!-- Logo -->
     <a href="{{ route('dashboard') }}" class="d-flex align-items-center mb-3 text-white text-decoration-none">
@@ -7,10 +8,18 @@
 
     <hr class="border-white-50">
 
-    <!-- Always visible Dashboard link -->
+    <!-- Dashboard link -->
     <ul class="nav nav-pills flex-column mb-4">
         <li>
-            <a href="{{ route('dashboard') }}" class="nav-link text-white {{ request()->routeIs('dashboard') ? 'active bg-success' : '' }}">
+            @if($role === 0) <!-- Instructor -->
+                <a href="{{ route('instructor.dashboard') }}" class="nav-link text-white {{ request()->routeIs('instructor.dashboard') ? 'active bg-success' : '' }}">
+            @elseif($role === 1) <!-- Chairperson -->
+                <a href="{{ route('dashboard') }}" class="nav-link text-white {{ request()->routeIs('dashboard') ? 'active bg-success' : '' }}">
+            @elseif($role === 4) <!-- GE Coordinator -->
+                <a href="{{ route('ge-coordinator.dashboard') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.dashboard') ? 'active bg-success' : '' }}">
+            @else <!-- Default/Admin -->
+                <a href="{{ route('dashboard') }}" class="nav-link text-white {{ request()->routeIs('dashboard') ? 'active bg-success' : '' }}">
+            @endif
                 <div class="d-flex align-items-center">
                     <span class="me-2" style="width: 20px;">🏠</span> Dashboard
                 </div>
@@ -18,7 +27,7 @@
         </li>
     </ul>
 
-    @php $role = Auth::user()->role; @endphp
+
 
     {{-- Instructor --}}
     @if ($role === 0)
@@ -145,6 +154,48 @@
         </ul>
     @endif
 
+    {{-- GE Coordinator --}}
+    @if ($role === 4)
+        <h6 class="text-uppercase fw-bold text-white-50 px-2 mb-3">GE Coordinator</h6>
+        <ul class="nav nav-pills flex-column mb-4">
+            <li>
+                <a href="{{ route('ge-coordinator.instructors') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.instructors*') ? 'active bg-success' : '' }}">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 20px;">👥</span> Manage GE Instructors
+                    </div>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('ge-coordinator.ge-requests') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.ge-requests') ? 'active bg-success' : '' }}">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 20px;">📝</span> GE Requests
+                    </div>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('ge-coordinator.assign.subjects') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.assign.subjects*') ? 'active bg-success' : '' }}">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 20px;">📚</span> Assign GE Subjects
+                    </div>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('ge-coordinator.grades') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.grades*') ? 'active bg-success' : '' }}">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 20px;">📈</span> View GE Grades
+                    </div>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('ge-coordinator.subjects.import') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.subjects.import*') ? 'active bg-success' : '' }}">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 20px;">📥</span> Import GE Subjects
+                    </div>
+                </a>
+            </li>
+        </ul>
+    @endif
+
     {{-- Admin --}}
     @if ($role === 3)
         <h6 class="text-uppercase fw-bold text-white-50 px-2 mb-3">Admin</h6>
@@ -156,6 +207,14 @@
                     </div>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('admin.academicPeriods') }}" class="nav-link text-white {{ request()->routeIs('admin.academicPeriods') ? 'active bg-success' : '' }}">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 20px;">📅</span> Academic Periods
+                    </div>
+                </a>
+            </li>
+
             <li>
                 <a href="{{ route('admin.courses') }}" class="nav-link text-white {{ request()->routeIs('admin.courses') ? 'active bg-success' : '' }}">
                     <div class="d-flex align-items-center">
@@ -171,7 +230,7 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('admin.academicPeriods') }}" class="nav-link text-white {{ request()->routeIs('admin.users') ? 'active bg-success' : '' }}">
+                <a href="{{ route('admin.academicPeriods') }}" class="nav-link text-white {{ request()->routeIs('admin.academicPeriods') ? 'active bg-success' : '' }}">
                     <div class="d-flex align-items-center">
                         <span class="me-2" style="width: 20px;">📅</span> Academic Period
                     </div>

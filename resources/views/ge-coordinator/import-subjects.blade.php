@@ -1,11 +1,36 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid px-4 py-5">
+<div class="container-fluid px-4 py-5" style="max-height: calc(100vh - 120px); overflow-y: auto;">
     <h1 class="text-2xl font-bold mb-4">
         <i class="bi bi-book-half text-success me-2"></i>
-        Confirm Curriculum Subjects
+        Import GE Subjects from Curriculum
     </h1>
+
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('info'))
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            {{ session('info') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
     {{-- Curriculum Dropdown --}}
     <div class="mb-4">
@@ -14,7 +39,7 @@
             <option value="">-- Choose Curriculum --</option>
             @foreach($curriculums as $curriculum)
                 <option value="{{ $curriculum->id }}">
-                    {{ $curriculum->name }} ({{ $curriculum->course->course_code }})
+                    {{ $curriculum->name }} - {{ $curriculum->course->course_code ?? 'N/A' }}
                 </option>
             @endforeach
         </select>
@@ -23,13 +48,13 @@
     {{-- Load Button --}}
     <div class="mb-3 d-flex justify-content-between align-items-center">
         <button id="loadSubjectsBtn" class="btn btn-success d-none">
-            <span id="loadBtnText"><i class="bi bi-arrow-repeat me-1"></i> Load Subjects</span>
+            <span id="loadBtnText"><i class="bi bi-arrow-repeat me-1"></i> Load GE Subjects</span>
             <span id="loadBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
         </button>
     </div>
 
     {{-- Subject Selection Form --}}
-    <form method="POST" action="{{ route('curriculum.confirmSubjects') }}" id="confirmForm">
+    <form method="POST" action="{{ route('ge-coordinator.subjects.confirm') }}" id="confirmForm">
         @csrf
         <input type="hidden" name="curriculum_id" id="formCurriculumId">
 
@@ -51,20 +76,6 @@
             </div>
         </div>
     </form>
-
-    {{-- Toast Notification --}}
-    @if(session('success'))
-        <div class="toast-container position-fixed top-0 end-0 p-3">
-            <div class="toast align-items-center text-bg-success show" role="alert">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        {{ session('success') }}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>
-            </div>
-        </div>
-    @endif
 </div>
 
 {{-- Confirmation Modal --}}
@@ -72,19 +83,20 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 shadow">
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="confirmModalLabel">Confirm Submission</h5>
+                <h5 class="modal-title" id="confirmModalLabel">Confirm Import</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                Are you sure you want to confirm and save the selected subjects for this curriculum?
+                Are you sure you want to import the selected GE subjects?
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" id="submitConfirmBtn" class="btn btn-success">Yes, Confirm</button>
+                <button type="button" id="submitConfirmBtn" class="btn btn-success">Yes, Import</button>
             </div>
         </div>
     </div>
 </div>
+
 @endsection
 
 @push('scripts')
@@ -99,7 +111,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const loadBtnSpinner = document.getElementById('loadBtnSpinner');
     const yearTabs = document.getElementById('yearTabs');
     const selectAllBtn = document.getElementById('selectAllBtn');
+    const submitConfirmBtn = document.getElementById('submitConfirmBtn');
+    const confirmForm = document.getElementById('confirmForm');
 
+    // Toggle load button based on curriculum selection
     curriculumSelect.addEventListener('change', function () {
         loadSubjectsBtn.classList.toggle('d-none', !this.value);
         subjectsContainer.classList.add('d-none');
@@ -107,6 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
         subjectsTableBody.innerHTML = '';
     });
 
+    // Load subjects when button is clicked
     loadSubjectsBtn.addEventListener('click', function () {
         const curriculumId = curriculumSelect.value;
         if (!curriculumId) return;
@@ -117,26 +133,16 @@ document.addEventListener('DOMContentLoaded', function () {
         loadSubjectsBtn.disabled = true;
         loadBtnText.classList.add('d-none');
         loadBtnSpinner.classList.remove('d-none');
-        subjectsContainer.classList.remove('d-none'); // Show the subjects container
 
         // Fetch subjects from the server
-        fetch(`/curriculum/${curriculumId}/fetch`, {
+        fetch(`/ge-coordinator/subjects/${curriculumId}/fetch`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(res => {
-            if (!res.ok) {
-                throw new Error('Failed to load subjects');
-            }
-            return res.json();
-        })
+        .then(res => res.json())
         .then(data => {
-            if (!Array.isArray(data)) {
-                console.error('Invalid response format:', data);
-                throw new Error('Invalid response format');
-            }
             if (!data.length) {
                 yearTabs.innerHTML = '';
-                subjectsTableBody.innerHTML = '<div class="text-muted text-center">No subjects found.</div>';
+                subjectsTableBody.innerHTML = '<div class="text-muted text-center">No GE subjects found in this curriculum.</div>';
                 return;
             }
 
@@ -154,22 +160,36 @@ document.addEventListener('DOMContentLoaded', function () {
                 const year = key.replace('year', '');
                 const isActive = tabIndex === 0 ? 'active' : '';
 
+                // Add year tab
                 yearTabs.insertAdjacentHTML('beforeend', `
                     <li class="nav-item">
-                        <button class="nav-link ${isActive}" style="color: #198754; font-weight: 500;" data-bs-toggle="tab" data-bs-target="#tab-${key}" type="button" role="tab">Year ${year}</button>
+                        <button class="nav-link ${isActive}" style="color: #198754; font-weight: 500;" 
+                                data-bs-toggle="tab" data-bs-target="#tab-${key}" type="button" role="tab" 
+                                data-year="${year}">
+                            Year ${year}
+                        </button>
                     </li>
                 `);
 
+                // Add semester tables
                 const semesterTables = Object.entries(semesters).map(([semester, subjects]) => {
                     if (!subjects.length) return '';
 
                     const rows = subjects.map(s => `
                         <tr>
-                            <td><input type="checkbox" class="form-check-input subject-checkbox" name="subject_ids[]" value="${s.id}" data-year="${s.year_level}" data-semester="${s.semester}"></td>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input subject-checkbox" type="checkbox" 
+                                           value="${s.id}" 
+                                           ${s.is_universal ? '' : 'disabled'}>
+                                    <input type="hidden" name="curriculum_subject_id[]" value="${s.id}">
+                                </div>
+                            </td>
                             <td>${s.subject_code}</td>
                             <td>${s.subject_description}</td>
                             <td>${s.year_level}</td>
-                            <td>${s.semester}</td>
+                            <td>${s.semester} Semester</td>
+                            <td>${s.is_universal ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-secondary">No</span>'}</td>
                         </tr>
                     `).join('');
 
@@ -178,8 +198,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         <table class="table table-bordered table-striped align-middle">
                             <thead class="table-success">
                                 <tr>
-                                    <th></th>
+                                    <th style="width: 40px;"></th>
                                     <th>Subject Code</th>
+                            <th>GE Subject</th>
                                     <th>Description</th>
                                     <th>Year</th>
                                     <th>Semester</th>
@@ -192,6 +213,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     `;
                 }).join('');
 
+                // Add tab content
                 subjectsTableBody.insertAdjacentHTML('beforeend', `
                     <div class="tab-pane fade ${isActive ? 'show active' : ''}" id="tab-${key}" role="tabpanel">
                         ${semesterTables}
@@ -200,6 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 tabIndex++;
             }
+
 
             subjectsContainer.classList.remove('d-none');
         })
@@ -213,25 +236,55 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Select/Unselect All Handler
-    document.addEventListener('click', function (e) {
-        if (e.target.closest('#selectAllBtn')) {
-            const btn = e.target.closest('#selectAllBtn');
-            let allSelected = btn.dataset.selected === 'true';
-            allSelected = !allSelected;
-            btn.dataset.selected = allSelected;
-            document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = allSelected);
-            btn.classList.toggle('btn-outline-success', !allSelected);
-            btn.classList.toggle('btn-success', allSelected);
-            btn.innerHTML = allSelected
-                ? '<i class="bi bi-x-square me-1"></i> Unselect All'
-                : '<i class="bi bi-check2-square me-1"></i> Select All';
-        }
+    // Handle select all/none
+    document.getElementById('selectAllBtn').addEventListener('click', function() {
+        const btn = this;
+        const allSelected = btn.dataset.selected === 'true';
+        
+        // Get the current tab's table
+        const currentTab = document.querySelector('.nav-link.active');
+        const currentTabId = currentTab.getAttribute('data-bs-target').replace('#', '');
+        const currentTable = document.querySelector(`#${currentTabId} .table`);
+        
+        // Toggle checkboxes in the current year level
+        const checkboxes = currentTable.querySelectorAll('input[type="checkbox"]:not(:disabled)');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = !allSelected;
+        });
+        
+        // Update button state
+        const isSelected = !allSelected;
+        btn.dataset.selected = isSelected;
+        btn.innerHTML = isSelected ? '<i class="bi bi-x-square me-1"></i> Deselect All' : '<i class="bi bi-check2-square me-1"></i> Select All';
     });
 
-    // Confirm Modal Submission
-    document.getElementById('submitConfirmBtn')?.addEventListener('click', function () {
-        document.getElementById('confirmForm')?.submit();
+    // Handle confirmation modal submit
+    submitConfirmBtn.addEventListener('click', function() {
+        // Get all checked checkboxes
+        const checkedCheckboxes = document.querySelectorAll('.subject-checkbox:checked');
+        
+        // Convert to array of values
+        const selectedSubjects = Array.from(checkedCheckboxes).map(checkbox => checkbox.value);
+        
+        if (selectedSubjects.length === 0) {
+            alert('Please select at least one subject.');
+            return;
+        }
+
+        // Clear any existing hidden inputs
+        const existingInputs = confirmForm.querySelectorAll('input[name="subject_ids[]"]');
+        existingInputs.forEach(input => input.remove());
+
+        // Create new hidden input for each selected subject
+        selectedSubjects.forEach(subjectId => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'subject_ids[]';
+            hiddenInput.value = subjectId;
+            confirmForm.appendChild(hiddenInput);
+        });
+
+        confirmForm.submit();
     });
 });
 </script>

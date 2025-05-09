@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\TermGrade;
 
 class Subject extends Model
 {
@@ -31,14 +32,20 @@ public function course()
 }
 
 
-public function students()
-{
-    return $this->belongsToMany(Student::class, 'student_subjects', 'subject_id', 'student_id')
-        ->withTimestamps()
-        ->wherePivot('is_deleted', false);
-}
+    public function students()
+    {
+        return $this->belongsToMany(Student::class, 'student_subjects', 'subject_id', 'student_id')
+            ->withTimestamps()
+            ->wherePivot('is_deleted', false);
+    }
 
+    public function grades()
+    {
+        return $this->hasMany(TermGrade::class, 'subject_id');
+    }
 
-
-
+    public function curriculumSubjects()
+    {
+        return $this->hasMany(CurriculumSubject::class, 'subject_code', 'subject_code');
+    }
 }

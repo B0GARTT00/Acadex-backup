@@ -30,7 +30,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Academic Period Selection
-Route::middleware(['auth'])->group(function () {
+Route::middleware('auth')->group(function () {
     Route::get('/select-academic-period', function () {
         $periods = \App\Models\AcademicPeriod::where('is_deleted', false)
             ->orderByDesc('academic_year')
@@ -46,76 +46,35 @@ Route::middleware(['auth'])->group(function () {
         ]);
         session(['active_academic_period_id' => $request->academic_period_id]);
         
-        // Redirect to appropriate dashboard based on role
+        // Redirect based on user role
         $user = auth()->user();
-        switch ($user->role) {
-            case 0: // Instructor
-                return redirect()->route('instructor.dashboard');
-            case 2: // Chairperson
-                return redirect()->route('chairperson.dashboard');
-            case 4: // GE Coordinator
-                return redirect()->route('ge-coordinator.dashboard');
-            default:
-                return redirect()->route('dashboard');
+        if ($user->role === 4) { // GE Coordinator
+            return redirect()->intended(route('ge-coordinator.dashboard'));
+        } elseif ($user->role === 0) { // Instructor
+            return redirect()->intended(route('instructor.dashboard'));
         }
+        
+        return redirect()->intended('/dashboard');
     })->name('set.academicPeriod');
 });
 
 // Dashboard
-Route::get('/dashboard', function () {
-    $user = auth()->user();
-    if ($user->role === 0) { // Instructor
-        return redirect()->route('instructor.dashboard');
-    } elseif ($user->role === 1) { // Chairperson
-        return redirect()->route('chairperson.dashboard');
-    } elseif ($user->role === 2 || $user->role === 3) { // Dean or Admin
-        $departments = \App\Models\Department::where('is_deleted', false)->get();
-        $courses = \App\Models\Course::where('is_deleted', false)->get();
-        $subjects = \App\Models\Subject::where('is_deleted', false)->get();
-        $academicPeriod = \App\Models\AcademicPeriod::where('is_deleted', false)
-            ->orderByDesc('academic_year')
-            ->orderByRaw("FIELD(semester, '1st', '2nd', 'Summer')")
-            ->first();
-        $activities = \App\Models\Activity::where('created_at', '>=', now()->subDays(7))
-            ->whereIn('type', ['department', 'course', 'subject', 'academic_period'])
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
-
-        // Use the latest academic period as the active one
-        $activePeriod = $academicPeriod;
-
-        return view('dashboard.admin', compact('departments', 'courses', 'subjects', 'academicPeriod', 'activities', 'activePeriod'));
-    } elseif ($user->role === 4) { // GE Coordinator
-        // Check if academic period is set in session
-        $activePeriodId = session('active_academic_period_id');
-        if (!$activePeriodId) {
-            return redirect()->route('select-academic-period');
-        }
-
-        return redirect()->route('ge-coordinator.dashboard');
-    }
-    return view('dashboard.admin');
-})
-    ->middleware(['auth', 'verified'])
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified', 'academic.period.set'])
     ->name('dashboard');
 
 // Chairperson Routes
 Route::prefix('chairperson')
-    ->middleware(['auth'])
+    ->middleware(['auth', 'academic.period.set'])
     ->name('chairperson.')
     ->group(function () {
         Route::get('/instructors', [ChairpersonController::class, 'manageInstructors'])->name('instructors');
         Route::get('/instructors/create', [ChairpersonController::class, 'createInstructor'])->name('createInstructor');
         Route::post('/instructors/store', [ChairpersonController::class, 'storeInstructor'])->name('storeInstructor');
         Route::post('/instructors/{id}/deactivate', [ChairpersonController::class, 'deactivateInstructor'])->name('deactivateInstructor');
-        Route::post('/instructors/{id}/request-ge', [\App\Http\Controllers\GESubjectRequestController::class, 'store'])->name('requestGE');
 
         Route::get('/assign-subjects', [ChairpersonController::class, 'assignSubjects'])->name('assignSubjects');
         Route::post('/assign-subjects/store', [ChairpersonController::class, 'storeAssignedSubject'])->name('storeAssignedSubject');
-        
-        // Add this route for toggling assigned subjects
-        Route::post('/assign-subjects/toggle', [ChairpersonController::class, 'toggleAssignedSubject'])->name('toggleAssignedSubject');
 
         Route::get('/grades', [ChairpersonController::class, 'viewGrades'])->name('viewGrades');
         Route::get('/students-by-year', [ChairpersonController::class, 'viewStudentsPerYear'])->name('studentsByYear');
@@ -123,75 +82,14 @@ Route::prefix('chairperson')
         Route::get('/approvals', [AccountApprovalController::class, 'index'])->name('accounts.index');
         Route::post('/approvals/{id}/approve', [AccountApprovalController::class, 'approve'])->name('accounts.approve');
         Route::post('/approvals/{id}/reject', [AccountApprovalController::class, 'reject'])->name('accounts.reject');
-
-        Route::get('/ge-requests', [\App\Http\Controllers\GESubjectRequestController::class, 'index'])->name('ge-requests');
-        Route::post('/ge-requests/{id}/approve', [\App\Http\Controllers\GESubjectRequestController::class, 'approve'])->name('ge-requests.approve');
-        Route::post('/ge-requests/{id}/reject', [\App\Http\Controllers\GESubjectRequestController::class, 'reject'])->name('ge-requests.reject');
     });
-
-// Chairperson Dashboard
-Route::get('/chairperson/dashboard', [ChairpersonController::class, 'dashboard'])->name('chairperson.dashboard');
 
 // Curriculum Routes
-Route::middleware(['auth'])->group(function () {
-    Route::get('/curriculum/select-subjects', [CurriculumController::class, 'selectSubjectsChair'])->name('curriculum.selectSubjects');
+Route::middleware(['auth', 'academic.period.set'])->group(function () {
+    Route::get('/curriculum/select-subjects', [CurriculumController::class, 'selectSubjects'])->name('curriculum.selectSubjects');
     Route::post('/curriculum/confirm-subjects', [CurriculumController::class, 'confirmSubjects'])->name('curriculum.confirmSubjects');
-    Route::get('/curriculum/{curriculum}/fetch', [CurriculumController::class, 'fetchSubjects'])
-        ->name('curriculum.fetchSubjects');
+    Route::get('/curriculum/{curriculum}/fetch-subjects', [CurriculumController::class, 'fetchSubjects'])->name('curriculum.fetchSubjects');
 });
-
-// Admin Routes
-Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
-    Route::get('/departments', [AdminController::class, 'departments'])->name('departments');
-    Route::get('/departments/create', [AdminController::class, 'createDepartment'])->name('createDepartment');
-    Route::post('/departments/store', [AdminController::class, 'storeDepartment'])->name('storeDepartment');
-
-    Route::get('/courses', [AdminController::class, 'courses'])->name('courses');
-    Route::get('/courses/create', [AdminController::class, 'createCourse'])->name('createCourse');
-    Route::post('/courses/store', [AdminController::class, 'storeCourse'])->name('storeCourse');
-
-    Route::get('/subjects', [AdminController::class, 'subjects'])->name('subjects');
-    Route::get('/subjects/create', [AdminController::class, 'createSubject'])->name('createSubject');
-    Route::post('/subjects/store', [AdminController::class, 'storeSubject'])->name('storeSubject');
-
-    Route::get('/academic-periods', [AcademicPeriodController::class, 'index'])->name('admin.academicPeriods.index');
-    Route::post('/academic-periods/generate', [AcademicPeriodController::class, 'generate'])->name('admin.academicPeriods.generate');
-    Route::get('/academic-periods/create', [AcademicPeriodController::class, 'create'])->name('admin.academicPeriods.create');
-    Route::post('/academic-periods', [AcademicPeriodController::class, 'store'])->name('admin.academicPeriods.store');
-});
-
-// GE Coordinator Routes
-Route::prefix('ge-coordinator')
-    ->middleware(['auth', 'academic.period.set'])
-    ->name('ge-coordinator.')
-    ->group(function () {
-        // GE Subject Requests
-        Route::get('/ge-requests', [GECoordinatorController::class, 'showGERequests'])->name('showGERequests');
-        Route::post('/requests/approve/{id}', [GECoordinatorController::class, 'approveGERequest'])->name('approveGERequest');
-        Route::post('/requests/reject/{id}', [GECoordinatorController::class, 'rejectGERequest'])->name('rejectGERequest');
-        
-        Route::get('/dashboard', [GECoordinatorController::class, 'dashboard'])->name('dashboard');
-        Route::get('/instructors', [GECoordinatorController::class, 'manageInstructors'])->name('manageInstructors');
-        Route::get('/grades', [GECoordinatorController::class, 'viewGrades'])->name('viewGrades');
-        Route::post('/instructors/{id}/approve', [GECoordinatorController::class, 'approveInstructor'])->name('approveInstructor');
-        
-        // GE Subjects Assignment
-        Route::get('/assign-subjects', [GECoordinatorController::class, 'assignSubjects'])->name('assign.subjects');
-        Route::post('/assign-subjects', [GECoordinatorController::class, 'storeAssignedSubject'])->name('store.assigned.subject');
-        
-        // GE Subjects Management
-        Route::get('/subjects', [GECoordinatorController::class, 'subjects'])->name('subjects.index');
-        Route::get('/subjects/import', [GECoordinatorController::class, 'importSubjects'])->name('subjects.import');
-        Route::get('/subjects/{curriculum}/fetch', [GECoordinatorController::class, 'fetchSubjects'])->name('subjects.fetch');
-        Route::post('/subjects/confirm', [GECoordinatorController::class, 'confirmSubjects'])->name('subjects.confirm');
-        Route::get('/subjects/create', [GECoordinatorController::class, 'createSubject'])->name('subjects.create');
-        Route::post('/subjects', [GECoordinatorController::class, 'storeSubject'])->name('subjects.store');
-        Route::get('/subjects/{subject}/edit', [GECoordinatorController::class, 'editSubject'])->name('subjects.edit');
-        Route::put('/subjects/{subject}', [GECoordinatorController::class, 'updateSubject'])->name('subjects.update');
-        Route::match(['post', 'delete'], '/instructors/{id}/reject', [GECoordinatorController::class, 'rejectInstructor'])->name('instructors.reject');
-        Route::patch('/instructors/deactivate/{id}', [GECoordinatorController::class, 'deactivateInstructor'])->name('instructors.deactivate');
-        Route::patch('/instructors/activate/{id}', [GECoordinatorController::class, 'activateInstructor'])->name('instructors.activate');
-    });
 
 // Instructor Routes
 Route::prefix('instructor')
@@ -256,15 +154,26 @@ Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
     Route::post('/academic-periods/generate', [AcademicPeriodController::class, 'generate'])->name('academicPeriods.generate');
 });
 
+<<<<<<< Updated upstream
+// Auth Routes
+=======
+// Chairperson Routes
+Route::prefix('chairperson')
+    ->middleware(['auth', EnsureAcademicPeriodSet::class])
+    ->name('chairperson.')
+    ->group(function () {
+        Route::get('/dashboard', [ChairpersonController::class, 'dashboard'])->name('dashboard');
+        Route::get('/instructors', [ChairpersonController::class, 'viewInstructors'])->name('instructors');
+        Route::get('/instructors/{user}/approve', [AccountApprovalController::class, 'approve'])->name('instructors.approve');
+        Route::get('/instructors/{user}/reject', [AccountApprovalController::class, 'reject'])->name('instructors.reject');
+    });
+
 // GE Coordinator Routes
 Route::prefix('ge-coordinator')
-    ->middleware(['auth', 'academic.period.set'])
+    ->middleware(['auth', EnsureAcademicPeriodSet::class])
     ->name('ge-coordinator.')
     ->group(function () {
         Route::get('/dashboard', [GECoordinatorController::class, 'dashboard'])->name('dashboard');
-        Route::get('/ge-requests', [GECoordinatorController::class, 'manageGERequests'])->name('ge-requests');
-        Route::post('/ge-requests/{id}/approve', [GECoordinatorController::class, 'approveGERequest'])->name('ge-requests.approve');
-        Route::post('/ge-requests/{id}/reject', [GECoordinatorController::class, 'rejectGERequest'])->name('ge-requests.reject');
         Route::get('/instructors', [GECoordinatorController::class, 'manageInstructors'])->name('instructors');
         Route::get('/grades', [GECoordinatorController::class, 'viewGrades'])->name('grades');
         Route::post('/instructors/{id}/approve', [GECoordinatorController::class, 'approveInstructor'])->name('instructors.approve');
@@ -275,17 +184,14 @@ Route::prefix('ge-coordinator')
         
         // GE Subjects Management
         Route::get('/subjects', [GECoordinatorController::class, 'subjects'])->name('subjects.index');
-        Route::get('/subjects/import', [GECoordinatorController::class, 'importSubjects'])->name('subjects.import');
-        Route::get('/subjects/{curriculum}/fetch', [GECoordinatorController::class, 'fetchSubjects'])->name('subjects.fetch');
-        Route::post('/subjects/confirm', [GECoordinatorController::class, 'confirmSubjects'])->name('subjects.confirm');
         Route::get('/subjects/create', [GECoordinatorController::class, 'createSubject'])->name('subjects.create');
         Route::post('/subjects', [GECoordinatorController::class, 'storeSubject'])->name('subjects.store');
         Route::get('/subjects/{subject}/edit', [GECoordinatorController::class, 'editSubject'])->name('subjects.edit');
         Route::put('/subjects/{subject}', [GECoordinatorController::class, 'updateSubject'])->name('subjects.update');
         Route::match(['post', 'delete'], '/instructors/{id}/reject', [GECoordinatorController::class, 'rejectInstructor'])->name('instructors.reject');
-        Route::patch('/instructors/deactivate/{id}', [GECoordinatorController::class, 'deactivateInstructor'])->name('instructors.deactivate');
-        Route::patch('/instructors/activate/{id}', [GECoordinatorController::class, 'activateInstructor'])->name('instructors.activate');
+        Route::post('/instructors/deactivate/{id}', [GECoordinatorController::class, 'deactivateInstructor'])->name('instructors.deactivate');
     });
 
 // Auth Routes (Breeze/Fortify)
+>>>>>>> Stashed changes
 require __DIR__.'/auth.php';

@@ -29,6 +29,7 @@
                         <tr>
                             <th>Instructor Name</th>
                             <th>Email Address</th>
+                            <th class="text-center">Type</th>
                             <th class="text-center">Status</th>
                             <th class="text-center">Action</th>
                         </tr>
@@ -39,11 +40,60 @@
                                 <td>{{ $instructor->last_name }}, {{ $instructor->first_name }} {{ $instructor->middle_name }}</td>
                                 <td>{{ $instructor->email }}</td>
                                 <td class="text-center">
+                                    @php
+                                        $request = \App\Models\GESubjectRequest::where('instructor_id', $instructor->id)
+                                            ->where('status', 'approved')
+                                            ->first();
+                                    @endphp
+                                    
+                                    @if($request)
+                                        <span class="badge bg-blue-100 text-blue-800 px-3 py-2 rounded-pill">
+                                            GE Instructor
+                                        </span>
+                                    @endif
+                                    
+                                    <span class="badge bg-gray-100 text-gray-800 px-3 py-2 rounded-pill">
+                                        Department Instructor
+                                    </span>
+                                </td>
+                                <td class="text-center">
                                     <span class="badge border border-success text-success px-3 py-2 rounded-pill">
                                         Active
                                     </span>
                                 </td>
                                 <td class="text-center">
+                                    @php
+                                        $request = \App\Models\GESubjectRequest::where('instructor_id', $instructor->id)
+                                            ->orderBy('created_at', 'desc')
+                                            ->first();
+                                    @endphp
+                                    
+                                    @if($request)
+                                        @if($request->status === 'pending')
+                                            <span class="badge bg-info px-3 py-2 rounded-pill">
+                                                <i class="bi bi-book"></i> GE Request Pending
+                                            </span>
+                                        @elseif($request->status === 'approved')
+                                            <span class="badge bg-blue-100 text-blue-800 px-3 py-2 rounded-pill">
+                                                <i class="bi bi-person-check"></i> GE Instructor
+                                            </span>
+                                        @elseif($request->status === 'rejected')
+                                            <span class="badge bg-danger px-3 py-2 rounded-pill">
+                                                <i class="bi bi-x-circle"></i> GE Request Rejected
+                                            </span>
+                                        @endif
+                                    @else
+                                        @if(!$instructor->is_universal)
+                                            <button type="button"
+                                                class="btn btn-info btn-sm d-inline-flex align-items-center gap-1 me-2"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#requestGEModal"
+                                                data-instructor-id="{{ $instructor->id }}"
+                                                data-instructor-name="{{ $instructor->last_name }}, {{ $instructor->first_name }}">
+                                                <i class="bi bi-book"></i> Request GE
+                                            </button>
+                                        @endif
+                                    @endif
                                     <button type="button"
                                         class="btn btn-danger btn-sm d-inline-flex align-items-center gap-1"
                                         data-bs-toggle="modal"
@@ -75,11 +125,12 @@
                 <table class="table table-bordered align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Applicant Name</th>
-                            <th>Email Address</th>
+                            <th>Name</th>
+                            <th>Email</th>
                             <th>Department</th>
                             <th>Course</th>
-                            <th class="text-center">Action</th>
+                            <th class="text-center">Type</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -87,8 +138,19 @@
                             <tr>
                                 <td>{{ $account->last_name }}, {{ $account->first_name }} {{ $account->middle_name }}</td>
                                 <td>{{ $account->email }}</td>
-                                <td>{{ $account->department?->department_code ?? 'N/A' }}</td>
-                                <td>{{ $account->course?->course_code ?? 'N/A' }}</td>
+                                <td>{{ $account->department->department_description ?? 'N/A' }}</td>
+                                <td>{{ $account->course->course_description ?? 'N/A' }}</td>
+                                <td class="text-center">
+                                    @if($account->is_universal)
+                                        <span class="badge bg-blue-100 text-blue-800 px-3 py-2 rounded-pill">
+                                            GE Instructor
+                                        </span>
+                                    @else
+                                        <span class="badge bg-gray-100 text-gray-800 px-3 py-2 rounded-pill">
+                                            Department Instructor
+                                        </span>
+                                    @endif
+                                </td>
                                 <td class="text-center">
                                     <button type="button"
                                         class="btn btn-success btn-sm d-inline-flex align-items-center gap-1"
@@ -115,6 +177,32 @@
             </div>
         @endif
     </section>
+</div>
+
+{{-- Modals --}}
+<div class="modal fade" id="requestGEModal" tabindex="-1" aria-labelledby="requestGEModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" id="requestGEForm">
+            @csrf
+            <div class="modal-content rounded-4 shadow">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="requestGEModalLabel">Request GE Subject</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Requesting GE subject for <strong id="requestGEName"></strong></p>
+                    <div class="mb-3">
+                        <label for="request_reason" class="form-label">Reason for Requesting GE Subject</label>
+                        <textarea class="form-control" id="request_reason" name="request_reason" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">Submit Request</button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 
 {{-- Modals --}}
@@ -212,4 +300,23 @@
     }
 </script>
 @endpush
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const requestGEModal = new bootstrap.Modal(document.getElementById('requestGEModal'));
+    const requestGEForm = document.getElementById('requestGEForm');
+    const requestGEName = document.getElementById('requestGEName');
+
+    document.querySelectorAll('[data-bs-target="#requestGEModal"]').forEach(button => {
+        button.addEventListener('click', function() {
+            const instructorId = this.dataset.instructorId;
+            const instructorName = this.dataset.instructorName;
+            requestGEName.textContent = instructorName;
+            requestGEForm.action = `/chairperson/instructors/${instructorId}/request-ge`;
+        });
+    });
+});
+</script>
+@endpush
+
 @endsection

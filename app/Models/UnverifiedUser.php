@@ -22,6 +22,7 @@ class UnverifiedUser extends Model
         'password',
         'department_id',
         'course_id',
+        'is_universal',
     ];
 
     /**

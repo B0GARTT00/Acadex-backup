@@ -100,27 +100,19 @@ class CurriculumController extends Controller
 
         $subject->delete();
 
-        return back()->with('success', 'Subject removed from curriculum.');
+        return redirect()->back()->with('success', 'Subject removed from curriculum.');
     }
 
     public function selectSubjects()
     {
         Gate::authorize('admin-chair');
-
-        $curriculums = Curriculum::with('course')->get();
-        return view('chairperson.select-curriculum-subjects', compact('curriculums'));
-    }
-
-    public function fetchSubjects(Curriculum $curriculum)
-    {
-        Gate::authorize('admin-chair');
-
-        $subjects = $curriculum->subjects()
-            ->orderBy('year_level')
-            ->orderBy('semester')
+        
+        // Get all curriculums with their associated courses
+        $curriculums = Curriculum::with('course')
+            ->orderByDesc('created_at')
             ->get();
 
-        return response()->json($subjects);
+        return view('chairperson.select-curriculum-subjects', compact('curriculums'));
     }
 
     public function confirmSubjects(Request $request)
@@ -129,28 +121,66 @@ class CurriculumController extends Controller
 
         $request->validate([
             'curriculum_id' => 'required|exists:curriculums,id',
-            'subject_ids' => 'required|array',
+            'subjects' => 'required|array',
         ]);
 
-        $subjects = CurriculumSubject::where('curriculum_id', $request->curriculum_id)
-            ->whereIn('id', $request->subject_ids)
-            ->get();
+        $curriculum = Curriculum::findOrFail($request->curriculum_id);
 
-        foreach ($subjects as $curriculumSubject) {
-            Subject::firstOrCreate([
-                'subject_code' => $curriculumSubject->subject_code
-            ], [
-                'subject_description' => $curriculumSubject->subject_description,
-                'department_id' => Auth::user()->department_id,
-                'course_id' => $curriculumSubject->curriculum->course_id,
-                'academic_period_id' => session('active_academic_period_id'),
-                'is_universal' => false,
+        // Delete existing curriculum subjects for this curriculum
+        CurriculumSubject::where('curriculum_id', $curriculum->id)
+            ->delete();
+
+        // Create new curriculum subjects
+        foreach ($request->subjects as $subjectId) {
+            $subject = Subject::findOrFail($subjectId);
+            
+            CurriculumSubject::create([
+                'curriculum_id' => $curriculum->id,
+                'subject_code' => $subject->subject_code,
+                'subject_description' => $subject->subject_description,
+                'year_level' => $subject->year_level,
+                'semester' => $subject->semester,
                 'is_deleted' => false,
-                'created_by' => Auth::id(),
-                'updated_by' => Auth::id(),
+                'is_universal' => true,
             ]);
         }
 
-        return back()->with('success', 'Subjects confirmed and added to the subject list.');
+        return redirect()->route('curriculum.selectSubjects')
+            ->with('success', 'Subjects have been successfully imported to the curriculum.');
     }
+
+    public function selectSubjectsChair()
+    {
+        $curriculums = Curriculum::with('course')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('chairperson.select-curriculum-subjects', compact('curriculums'));
+    }
+
+    public function fetchSubjects($curriculum)
+    {
+        $curriculumId = $curriculum;
+        
+        $subjects = CurriculumSubject::where('curriculum_id', $curriculumId)
+            ->where('is_deleted', false)
+            ->with('subject')
+            ->get()
+            ->map(function ($curriculumSubject) {
+                return [
+                    'id' => $curriculumSubject->id,
+                    'subject_code' => $curriculumSubject->subject_code,
+                    'subject_description' => $curriculumSubject->subject_description,
+                    'year_level' => $curriculumSubject->year_level,
+                    'semester' => $curriculumSubject->semester,
+                    'curriculum' => $curriculumSubject->curriculum->name ?? 'N/A',
+                    'course' => $curriculumSubject->curriculum->course->course_code ?? 'N/A',
+                    'is_universal' => true
+                ];
+            });
+
+        return response()->json($subjects);
+    }
+    
+
 }

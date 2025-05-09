@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Course;
 use App\Models\Department;
 use App\Models\UnverifiedUser;
 use Illuminate\Http\RedirectResponse;
@@ -50,6 +51,11 @@ class RegisteredUserController extends Controller
         // Append domain to email
         $fullEmail = strtolower(trim($request->email)) . '@brokenshire.edu.ph';
 
+        // Check if this is a GE course by checking the course_code
+        $isGE = Course::where('id', $request->course_id)
+                    ->where('course_code', 'GE')
+                    ->exists();
+
         // Store in unverified_users table
         UnverifiedUser::create([
             'first_name'    => $request->first_name,
@@ -59,8 +65,10 @@ class RegisteredUserController extends Controller
             'password'      => Hash::make($request->password),
             'department_id' => $request->department_id,
             'course_id'     => $request->course_id,
+            'is_universal'  => $isGE, // Set is_universal based on course selection
         ]);
 
-        return redirect()->route('login')->with('status', 'Your account request has been submitted and is pending chairperson approval.');
+        $approver = $isGE ? 'GE Coordinator' : 'chairperson';
+        return redirect()->route('login')->with('status', "Your account request has been submitted and is pending {$approver} approval.");
     }
 }

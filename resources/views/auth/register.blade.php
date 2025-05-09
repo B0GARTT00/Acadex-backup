@@ -61,7 +61,7 @@
             </div>
 
             {{-- Course --}}
-            <div class="hidden transition-opacity duration-300" id="course-wrapper">
+            <div id="course-wrapper" style="display: none;">
                 <x-input-label for="course_id" :value="__('Select Course')" />
                 <select id="course_id" name="course_id" class="w-full mt-1 border-gray-300 rounded-md shadow-sm" required>
                     <option value="">-- Choose Course --</option>
@@ -144,26 +144,28 @@
         deptSelect.addEventListener('change', function () {
             const deptId = this.value;
             if (!deptId) {
-                courseWrapper.classList.add('hidden');
+                courseWrapper.style.display = 'none';
                 courseSelect.innerHTML = '<option value="">-- Choose Course --</option>';
                 return;
             }
 
+            courseWrapper.style.display = 'block';
             courseSelect.innerHTML = '<option value="">Loading...</option>';
+            
             fetch(`/api/department/${deptId}/courses`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.length === 1) {
                         // Auto-select and hide course selection
                         courseSelect.innerHTML = `<option value="${data[0].id}" selected>${data[0].name}</option>`;
-                        courseWrapper.classList.add('hidden');
+                        courseWrapper.style.display = 'none';
                     } else {
                         // Show dropdown with options
                         courseSelect.innerHTML = '<option value="">-- Choose Course --</option>';
                         data.forEach(course => {
                             courseSelect.innerHTML += `<option value="${course.id}">${course.name}</option>`;
                         });
-                        courseWrapper.classList.remove('hidden');
+                        courseWrapper.style.display = 'block';
                     }
                 });
         });
