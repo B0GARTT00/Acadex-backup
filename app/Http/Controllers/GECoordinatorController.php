@@ -9,6 +9,7 @@ use App\Models\Course;
 use App\Models\Department;
 use App\Models\AcademicPeriod;
 use App\Models\UnverifiedUser;
+use App\Models\GESubjectRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -34,9 +35,50 @@ class GECoordinatorController extends Controller
      */
     public function dashboard()
     {
-        return redirect()->route('dashboard');
-    }
+        $academicPeriodId = session('active_academic_period_id');
 
+        // Get instructor counts
+        $instructors = User::where('role', 0) // Instructor role
+            ->where('is_universal', true)
+            ->get();
+
+        $instructorCount = $instructors->count();
+        $studentCount = Student::where('is_deleted', false)
+            ->whereHas('course', function ($query) {
+                $query->where('department_id', 1);
+            })
+            ->count();
+
+        // Get GE subjects
+        $geSubjects = Subject::where('department_id', 1) // GE department ID
+            ->where('is_deleted', false)
+            ->where('academic_period_id', $academicPeriodId)
+            ->with('department')
+            ->get();
+
+        $subjectCount = $geSubjects->count();
+
+        $pendingInstructors = User::where('role', 0) // Instructor role
+            ->where('is_universal', true)
+            ->where('is_active', false)
+            ->get();
+
+
+
+        // Get pending GE requests
+        $pendingRequests = GESubjectRequest::where('status', 'pending')
+            ->with(['instructor', 'department', 'chairperson'])
+            ->get();
+
+        return view('dashboard.ge-coordinator', compact(
+            'instructorCount',
+            'studentCount',
+            'subjectCount',
+            'pendingInstructors',
+            'pendingRequests',
+            'geSubjects'
+        ));
+    }
 
     /**
      * Display a listing of GE instructors.
@@ -57,13 +99,46 @@ class GECoordinatorController extends Controller
         $departments = Department::all();
         $courses = Course::all();
 
-        return view('ge-coordinator.manage-instructors', [
-            'instructors' => $instructors,
-            'pendingInstructors' => $pendingInstructors,
-            'departments' => $departments,
-            'courses' => $courses
-        ]);
+        return view('ge-coordinator.manage-instructors', compact(
+            'instructors',
+            'pendingInstructors',
+            'departments',
+            'courses'
+        ));
     }
+
+    /**
+     * Display GE subject requests.
+     */
+    public function manageGERequests()
+    {
+        $requests = GESubjectRequest::where('status', 'pending')
+            ->with(['instructor', 'department', 'chairperson'])
+            ->get();
+
+        $pendingInstructors = UnverifiedUser::with('department')
+            ->where('is_universal', true)
+            ->get();
+
+        return view('ge-coordinator.ge-requests', compact('requests', 'pendingInstructors'));
+    }
+
+    /**
+     * Display GE subjects.
+     */
+    public function subjects()
+    {
+        $subjects = Subject::where('department_id', 1) // GE department ID
+            ->where('is_deleted', false)
+            ->with('department')
+            ->get();
+
+        return view('ge-coordinator.subjects', compact('subjects'));
+    }
+
+
+
+
 
 
     /**
@@ -116,7 +191,7 @@ class GECoordinatorController extends Controller
 
         DB::beginTransaction();
         try {
-            // Create the instructor
+            // Create the instructor as a department instructor first
             $instructor = User::create([
                 'first_name' => $pendingInstructor->first_name,
                 'middle_name' => $pendingInstructor->middle_name,
@@ -125,17 +200,26 @@ class GECoordinatorController extends Controller
                 'password' => $pendingInstructor->password,
                 'department_id' => $pendingInstructor->department_id,
                 'course_id' => $pendingInstructor->course_id,
-                'is_universal' => true, // Force set to true for GE instructors
+                'is_universal' => false, // Start as department instructor
                 'role' => 0, // Instructor role
                 'is_active' => true,
                 'email_verified_at' => now(),
+            ]);
+
+            // Create GE subject request if it doesn't exist
+            GESubjectRequest::firstOrCreate([
+                'instructor_id' => $instructor->id,
+                'department_id' => $pendingInstructor->department_id,
+            ], [
+                'status' => 'pending', // Start with pending status
+                'request_reason' => 'Department instructor registration',
             ]);
 
             // Delete the pending instructor record
             $pendingInstructor->delete();
 
             DB::commit();
-            return redirect()->back()->with('success', 'GE Instructor approved successfully.');
+            return redirect()->back()->with('success', 'Instructor approved successfully and pending GE approval.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Failed to approve instructor: ' . $e->getMessage());
@@ -158,6 +242,74 @@ class GECoordinatorController extends Controller
         $pendingInstructor->delete();
 
         return redirect()->back()->with('success', 'GE Instructor rejected successfully.');
+    }
+
+    /**
+     * Display all GE subject requests.
+     */
+    public function showGERequests()
+    {
+        $requests = GESubjectRequest::with(['instructor', 'department', 'chairperson'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $pendingInstructors = UnverifiedUser::with('department')
+            ->where('is_universal', true)
+            ->get();
+
+        return view('ge-coordinator.ge-requests', compact('requests', 'pendingInstructors'));
+    }
+
+    /**
+     * Approve a GE subject request.
+     */
+    public function approveGERequest($id)
+    {
+        $request = GESubjectRequest::findOrFail($id);
+
+        // Check if the request is already approved
+        if ($request->status === 'approved') {
+            return redirect()->back()->with('error', 'This request has already been approved.');
+        }
+
+        // Update the request status
+        $request->update([
+            'status' => 'approved',
+            'response_reason' => 'Request approved by GE Coordinator',
+        ]);
+
+        // Get the instructor and update their GE status
+        $instructor = User::findOrFail($request->instructor_id);
+        
+        // Ensure the instructor is marked as GE instructor and activated
+        $instructor->update([
+            'is_universal' => true, // Mark as GE instructor
+            'is_active' => true,    // Activate the instructor
+            'role' => 0,           // Ensure role is set to instructor
+        ]);
+
+        return redirect()->back()->with('success', 'GE subject request approved successfully. Instructor has been added to GE instructor management.');
+    }
+
+    /**
+     * Reject a GE subject request.
+     */
+    public function rejectGERequest($id)
+    {
+        $request = GESubjectRequest::findOrFail($id);
+
+        // Check if the request is already rejected
+        if ($request->status === 'rejected') {
+            return redirect()->back()->with('error', 'This request has already been rejected.');
+        }
+
+        // Update the request status
+        $request->update([
+            'status' => 'rejected',
+            'response_reason' => request('response_reason', 'Request rejected by GE Coordinator'),
+        ]);
+
+        return redirect()->back()->with('success', 'GE subject request rejected successfully.');
     }
 
     /**
@@ -320,6 +472,8 @@ class GECoordinatorController extends Controller
         return redirect()->route('ge-coordinator.instructors')
             ->with('success', 'Instructor account created successfully and pending approval.');
     }
+
+
 
     /**
      * Display the specified resource.

@@ -34,12 +34,20 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
 
-        // Require academic period selection for instructor or chairperson
-        if (in_array($user->role, [0, 2])) {
-            return redirect()->route('select.academicPeriod');
+        // Redirect based on user role
+        switch ($user->role) {
+            case 0: // Instructor
+            case 2: // Chairperson
+                return redirect()->route('select.academicPeriod');
+            case 3: // Dean
+                return redirect()->route('dean.dashboard');
+            case 4: // GE Coordinator
+                return redirect()->route('ge-coordinator.dashboard');
+            case 5: // Admin
+                return redirect()->route('admin.dashboard');
+            default:
+                return redirect()->route('dashboard');
         }
-
-        return redirect()->intended(route('dashboard', absolute: false));
     }
 
     /**

@@ -166,6 +166,13 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('ge-coordinator.ge-requests') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.ge-requests') ? 'active bg-success' : '' }}">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 20px;">📝</span> GE Requests
+                    </div>
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('ge-coordinator.assign.subjects') }}" class="nav-link text-white {{ request()->routeIs('ge-coordinator.assign.subjects*') ? 'active bg-success' : '' }}">
                     <div class="d-flex align-items-center">
                         <span class="me-2" style="width: 20px;">📚</span> Assign GE Subjects
@@ -201,6 +208,14 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('admin.academicPeriods') }}" class="nav-link text-white {{ request()->routeIs('admin.academicPeriods') ? 'active bg-success' : '' }}">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 20px;">📅</span> Academic Periods
+                    </div>
+                </a>
+            </li>
+
+            <li>
                 <a href="{{ route('admin.courses') }}" class="nav-link text-white {{ request()->routeIs('admin.courses') ? 'active bg-success' : '' }}">
                     <div class="d-flex align-items-center">
                         <span class="me-2" style="width: 20px;">📘</span> Courses
@@ -215,12 +230,13 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('admin.users') }}" class="nav-link text-white {{ request()->routeIs('admin.users') ? 'active bg-success' : '' }}">
+                <a href="{{ route('curriculum.selectSubjects') }}" class="nav-link text-white {{ request()->routeIs('curriculum.selectSubjects') ? 'active bg-success' : '' }}">
                     <div class="d-flex align-items-center">
-                        <span class="me-2" style="width: 20px;">👤</span> Users
+                        <span class="me-2" style="width: 20px;">📥</span> Import Subjects
                     </div>
                 </a>
             </li>
+
         </ul>
     @endif
 </div>

@@ -19,8 +19,43 @@ class AcademicPeriodController extends Controller
     {
         Gate::authorize('admin');
 
-        $periods = AcademicPeriod::orderBy('created_at', 'desc')->get();
+        $periods = AcademicPeriod::where('is_deleted', false)
+            ->orderByDesc('academic_year')
+            ->orderByRaw("FIELD(semester, '1st', '2nd', 'Summer')")
+            ->get();
+
         return view('admin.academic-periods.index', compact('periods'));
+    }
+
+    // 📝 Show form to create academic period
+    public function create()
+    {
+        Gate::authorize('admin');
+
+        return view('admin.academic-periods.create');
+    }
+
+    // 📦 Store new academic period
+    public function store(Request $request)
+    {
+        Gate::authorize('admin');
+
+        $validated = $request->validate([
+            'academic_year' => 'required|string|regex:/^[0-9]{4}-[0-9]{4}$/|unique:academic_periods,academic_year',
+            'semester' => 'required|string|in:1st,2nd,Summer',
+            'is_active' => 'required|boolean',
+        ]);
+
+        AcademicPeriod::create([
+            'academic_year' => $validated['academic_year'],
+            'semester' => $validated['semester'],
+            'is_active' => $validated['is_active'],
+            'is_deleted' => false,
+            'created_by' => Auth::id(),
+            'updated_by' => Auth::id(),
+        ]);
+
+        return redirect()->route('admin.academicPeriods.index')->with('success', 'Academic period created successfully.');
     }
 
     // 🔄 Auto-generate next academic year
@@ -74,6 +109,6 @@ class AcademicPeriodController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.academicPeriods')->with('success', 'New academic periods generated successfully.');
+        return redirect()->route('admin.academicPeriods.index')->with('success', 'New academic periods generated successfully.');
     }
 }

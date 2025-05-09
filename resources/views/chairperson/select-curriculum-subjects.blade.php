@@ -117,12 +117,23 @@ document.addEventListener('DOMContentLoaded', function () {
         loadSubjectsBtn.disabled = true;
         loadBtnText.classList.add('d-none');
         loadBtnSpinner.classList.remove('d-none');
+        subjectsContainer.classList.remove('d-none'); // Show the subjects container
 
-        fetch(`/curriculum/${curriculumId}/fetch-subjects`, {
+        // Fetch subjects from the server
+        fetch(`/curriculum/${curriculumId}/fetch`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Failed to load subjects');
+            }
+            return res.json();
+        })
         .then(data => {
+            if (!Array.isArray(data)) {
+                console.error('Invalid response format:', data);
+                throw new Error('Invalid response format');
+            }
             if (!data.length) {
                 yearTabs.innerHTML = '';
                 subjectsTableBody.innerHTML = '<div class="text-muted text-center">No subjects found.</div>';

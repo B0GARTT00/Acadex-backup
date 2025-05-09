@@ -10,9 +10,21 @@ class EnsureAcademicPeriodSet
 {
     public function handle(Request $request, Closure $next)
     {
+        // Check if academic period is required for this user
+        $requiresAcademicPeriod = false;
+        
+        if (Auth::check()) {
+            $user = Auth::user();
+            
+            // Instructor, Chairperson, or GE Coordinator always require academic period
+            if (in_array($user->role, [0, 2, 4])) {
+                $requiresAcademicPeriod = true;
+            }
+        }
+
+        // If academic period is required but not set, redirect to selection
         if (
-            Auth::check() &&
-            in_array(Auth::user()->role, [0, 4]) && // Instructor or GE Coordinator
+            $requiresAcademicPeriod &&
             !session()->has('active_academic_period_id') &&
             !$request->is('select-academic-period') &&
             !$request->is('set-academic-period')

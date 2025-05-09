@@ -62,7 +62,7 @@
             <div class="card shadow-sm border-0 rounded-4">
                 <div class="card-body">
                     <h5 class="card-title fw-semibold mb-4">📋 Recent Activities</h5>
-                    @if($recentActivities->isNotEmpty())
+                    @if($activities->isNotEmpty())
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -73,7 +73,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($recentActivities as $activity)
+                                    @foreach($activities as $activity)
                                         <tr>
                                             <td>
                                                 <span class="badge bg-{{ $activity->type === 'department' ? 'primary' : ($activity->type === 'course' ? 'info' : ($activity->type === 'subject' ? 'success' : 'warning')) }}">

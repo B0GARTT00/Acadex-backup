@@ -27,15 +27,16 @@
                     'icon' => '📚', 
                     'value' => $subjectCount, 
                     'color' => 'text-success',
-                    'route' => '#'
+                    'route' => route('ge-coordinator.subjects.index')
                 ],
+
                 [
                     'label' => 'Pending Approvals', 
                     'icon' => '⏳', 
                     'value' => $pendingInstructors->count(), 
                     'color' => 'text-warning',
                     'route' => route('ge-coordinator.instructors')
-                ],
+                ]
             ];
         @endphp
 
@@ -56,42 +57,56 @@
         @endforeach
     </div>
 
-    {{-- Recent Students --}}
-    <div class="row mt-5">
-        <div class="col-12">
+        {{-- GE Subject Requests --}}
+        <div class="col-md-6">
             <div class="card shadow-sm border-0 rounded-4">
                 <div class="card-body">
-                    <h5 class="card-title fw-semibold mb-4">👥 Recent GE Students</h5>
-                    @if($recentStudents->isNotEmpty())
+                    <h5 class="card-title fw-semibold mb-4">📝 GE Subject Requests</h5>
+                    @if($pendingRequests->isNotEmpty())
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Name</th>
-                                        <th>Course</th>
-                                        <th>Year Level</th>
+                                        <th>Instructor</th>
+                                        <th>Department</th>
+                                        <th>Request Reason</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($recentStudents as $student)
+                                    @foreach($pendingRequests as $request)
                                         <tr>
-                                            <td>{{ $student->first_name }} {{ $student->last_name }}</td>
-                                            <td>{{ $student->course->course_name ?? 'N/A' }}</td>
-                                            <td>{{ $student->year_level }}</td>
+                                            <td>{{ $request->instructor->last_name }}, {{ $request->instructor->first_name }}</td>
+                                            <td>{{ $request->department->name }}</td>
+                                            <td>{{ $request->request_reason }}</td>
+                                            <td>
+                                                    <form action="{{ route('ge-coordinator.ge-requests.approve', $request->id) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-success" title="Approve">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                    </form>
+                                                    <form action="{{ route('ge-coordinator.ge-requests.reject', $request->id) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-danger" title="Reject" onclick="return confirm('Are you sure you want to reject this request?')">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </form>
+                                            </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
                             </table>
                         </div>
                         <div class="text-end mt-3">
-                            <a href="{{ route('ge-coordinator.grades') }}" class="btn btn-outline-primary btn-sm">
-                                View All Students <i class="fas fa-arrow-right ms-1"></i>
+                            <a href="{{ route('ge-coordinator.ge-requests') }}" class="btn btn-outline-primary btn-sm">
+                                View All Requests <i class="fas fa-arrow-right ms-1"></i>
                             </a>
                         </div>
                     @else
                         <div class="text-center py-4">
-                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No recent students found</p>
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No pending GE subject requests</p>
                         </div>
                     @endif
                 </div>
@@ -125,4 +140,54 @@
     }
 </style>
 @endpush
+@push('scripts')
+<script>
+    function approveRequest(requestId) {
+        if (confirm('Are you sure you want to approve this request?')) {
+            $.ajax({
+                url: '{{ route('ge-coordinator.ge-requests.approve', ':id') }}'.replace(':id', requestId),
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success('Request approved successfully');
+                        location.reload();
+                    } else {
+                        toastr.error('Failed to approve request');
+                    }
+                },
+                error: function() {
+                    toastr.error('An error occurred while processing the request');
+                }
+            });
+        }
+    }
+
+    function rejectRequest(requestId) {
+        if (confirm('Are you sure you want to reject this request?')) {
+            $.ajax({
+                url: '{{ route('ge-coordinator.ge-requests.reject', ':id') }}'.replace(':id', requestId),
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success('Request rejected successfully');
+                        location.reload();
+                    } else {
+                        toastr.error('Failed to reject request');
+                    }
+                },
+                error: function() {
+                    toastr.error('An error occurred while processing the request');
+                }
+            });
+        }
+    }
+</script>
+@endpush
+
 @endsection

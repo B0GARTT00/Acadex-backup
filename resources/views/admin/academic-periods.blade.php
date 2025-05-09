@@ -33,31 +33,6 @@
                                             Semester
                                             <button class="ml-2 p-1 rounded-full hover:bg-gray-100">
                                                 <i class="bi bi-sort-down"></i>
-                                            </button>
-                                        </div>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach($periods as $period)
-                                    <tr class="hover:bg-gray-50 transition-colors duration-200">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">
-                                                {{ $period->academic_year }}
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">
-                                                {{ ucfirst($period->semester) }}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -91,7 +66,7 @@
                 <h5 class="modal-title" id="addAcademicPeriodModalLabel">Add New Academic Period</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('admin.createAcademicPeriod') }}" method="POST">
+            <form action="{{ route('admin.academicPeriods.store') }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <div class="mb-4">
@@ -110,6 +85,13 @@
                             <option value="second">Second Semester</option>
                             <option value="summer">Summer Term</option>
                         </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="is_active" class="block text-sm font-medium text-gray-700">Is Active</label>
+                        <div class="mt-1">
+                            <input type="checkbox" name="is_active" id="is_active" value="1" 
+                                   class="form-checkbox h-5 w-5 text-indigo-600 focus:ring-indigo-500">
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

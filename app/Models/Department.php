@@ -10,7 +10,7 @@ class Department extends Model
     use HasFactory;
 
     protected $fillable = [
-        'department_code', 'department_description', 'is_deleted', 'created_by', 'updated_by'
+        'department_code', 'department_description', 'department_name', 'is_deleted', 'created_by', 'updated_by'
     ];
 
     public function courses()

@@ -43,4 +43,9 @@ public function course()
     {
         return $this->hasMany(TermGrade::class, 'subject_id');
     }
+
+    public function curriculumSubjects()
+    {
+        return $this->hasMany(CurriculumSubject::class, 'subject_code', 'subject_code');
+    }
 }

@@ -130,6 +130,8 @@
             </div>
         @endif
     </section>
+
+
 </div>
 
 {{-- Deactivate Confirmation Modal --}}
@@ -151,50 +153,27 @@
                     <button type="submit" class="btn btn-danger">Deactivate</button>
                 </div>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
 {{-- Activate Confirmation Modal --}}
 <div class="modal fade" id="confirmActivateModal" tabindex="-1" aria-labelledby="confirmActivateModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <form id="activateForm" method="POST">
-            @csrf
-            @method('PATCH')
-            <div class="modal-content rounded-4 shadow">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title" id="confirmActivateModalLabel">Confirm Account Activation</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    Are you sure you want to activate <strong id="activateInstructorName"></strong>'s account?
-                </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">Activate</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-{{-- Reject Confirmation Modal --}}
-<div class="modal fade" id="confirmRejectModal" tabindex="-1" aria-labelledby="confirmRejectModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="confirmRejectModalLabel">Confirm Rejection</h5>
+                <h5 class="modal-title" id="confirmActivateModalLabel">Activate Instructor</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                Are you sure you want to reject this instructor application?
+                <p>Are you sure you want to activate this instructor?</p>
+                <p class="fw-bold" id="activateInstructorName"></p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="rejectForm" method="POST" class="d-inline">
+                <form action="{{ route('ge-coordinator.instructors.activate', ['id' => $instructor->id]) }}" method="POST" class="d-inline">
                     @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Reject</button>
+                    <button type="submit" class="btn btn-success">Activate</button>
                 </form>
             </div>
         </div>
@@ -207,32 +186,26 @@
         // Deactivate modal
         const deactivateModal = document.getElementById('confirmDeactivateModal');
         if (deactivateModal) {
-            deactivateModal.addEventListener('show.bs.modal', function(event) {
+            deactivateModal.addEventListener('show.bs.modal', function (event) {
                 const button = event.relatedTarget;
                 const instructorId = button.getAttribute('data-instructor-id');
-                document.getElementById('deactivateForm').action = `/ge-coordinator/instructors/deactivate/${instructorId}`;
-                document.getElementById('instructorName').textContent = button.getAttribute('data-instructor-name');
+                const instructorName = button.getAttribute('data-instructor-name');
+                
+                document.getElementById('deactivateInstructorId').value = instructorId;
+                document.getElementById('deactivateInstructorName').textContent = instructorName;
             });
         }
 
         // Activate modal
         const activateModal = document.getElementById('confirmActivateModal');
         if (activateModal) {
-            activateModal.addEventListener('show.bs.modal', function(event) {
+            activateModal.addEventListener('show.bs.modal', function (event) {
                 const button = event.relatedTarget;
                 const instructorId = button.getAttribute('data-instructor-id');
-                document.getElementById('activateForm').action = `/ge-coordinator/instructors/activate/${instructorId}`;
-                document.getElementById('activateInstructorName').textContent = button.getAttribute('data-instructor-name');
-            });
-        }
-
-        // Reject modal
-        const rejectModal = document.getElementById('confirmRejectModal');
-        if (rejectModal) {
-            rejectModal.addEventListener('show.bs.modal', function(event) {
-                const button = event.relatedTarget;
-                document.getElementById('rejectForm').action = button.getAttribute('data-action');
-                document.getElementById('rejectInstructorName').textContent = button.getAttribute('data-name');
+                const instructorName = button.getAttribute('data-instructor-name');
+                
+                document.getElementById('activateInstructorId').value = instructorId;
+                document.getElementById('activateInstructorName').textContent = instructorName;
             });
         }
     });

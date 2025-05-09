@@ -45,6 +45,12 @@ class Course extends Model
         return $this->hasMany(Student::class);
     }
 
+    // 🔗 Subjects (One Course has many Subjects)
+    public function subjects()
+    {
+        return $this->hasMany(Subject::class);
+    }
+
     /**
      * Accessors
      */
