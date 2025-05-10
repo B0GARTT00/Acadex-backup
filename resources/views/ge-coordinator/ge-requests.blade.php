@@ -1,24 +1,24 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid px-4 py-5" style="max-height: calc(100vh - 120px); overflow-y: auto;">
-    <h1 class="text-2xl font-bold mb-4">
-        <i class="bi bi-book-half text-success me-2"></i>
-        GE Subject Requests
-    </h1>
+    <div class="container-fluid px-4 py-5" style="max-height: calc(100vh - 120px); overflow-y: auto;">
+        <h1 class="text-2xl font-bold mb-4">
+            <i class="bi bi-book-half text-success me-2"></i>
+            GE Subject Requests
+        </h1>
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
 
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-light">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
                         <tr>
                             <th>Instructor</th>
                             <th>Department</th>
@@ -45,7 +45,7 @@
                                 </td>
                                 <td>
                                     @if($request->status === 'pending')
-                                        <form action="{{ route('ge-coordinator.ge-requests.approve', $request->id) }}" method="POST" class="d-inline">
+                                        <form action="{{ route('approveGERequest', $request->id) }}" method="POST" class="d-inline">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-success">
                                                 <i class="bi bi-check-lg"></i> Approve
@@ -64,7 +64,7 @@
                                                         <h5 class="modal-title" id="rejectModalLabel{{ $request->id }}">Reject GE Subject Request</h5>
                                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                     </div>
-                                                    <form action="{{ route('ge-coordinator.ge-requests.reject', $request->id) }}" method="POST">
+                                                    <form action="{{ route('rejectGERequest', $request->id) }}" method="POST">
                                                         @csrf
                                                         <div class="modal-body">
                                                             <div class="mb-3">
@@ -132,7 +132,8 @@
                                         </form>
                                     </td>
                                 </tr>
-                            @endforeach
+                            </tr>
+                        @endforeach
                         </tbody>
                     </table>
                 </div>

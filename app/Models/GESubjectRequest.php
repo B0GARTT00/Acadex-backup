@@ -17,8 +17,8 @@ class GESubjectRequest extends Model
         'department_id',
         'chairperson_id',
         'request_reason',
-        'status',
-        'reason'
+        'response_reason',
+        'status'
     ];
 
     public function instructor()

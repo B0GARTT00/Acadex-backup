@@ -69,9 +69,8 @@ class ChairpersonController extends Controller
     {
         Gate::authorize('chairperson');
 
-        // Get all active instructors from the department
+        // Get all instructors from the department
         $instructors = User::where('role', 0)
-            ->where('is_active', true)
             ->where('department_id', Auth::user()->department_id)
             ->where('course_id', '!=', 4) // Exclude GE instructors
             ->get();
@@ -135,6 +134,20 @@ class ChairpersonController extends Controller
         $instructor->update(['is_active' => false]);
 
         return redirect()->back()->with('success', 'Instructor deactivated successfully.');
+    }
+
+    public function activateInstructor($id)
+    {
+        Gate::authorize('chairperson');
+
+        $instructor = User::where('id', $id)
+            ->where('role', 0)
+            ->where('department_id', Auth::user()->department_id)
+            ->firstOrFail();
+
+        $instructor->update(['is_active' => true]);
+
+        return redirect()->back()->with('success', 'Instructor activated successfully.');
     }
 
     // ============================

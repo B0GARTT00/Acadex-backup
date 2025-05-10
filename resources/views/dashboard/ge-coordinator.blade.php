@@ -58,10 +58,10 @@
     </div>
 
         {{-- GE Subject Requests --}}
-        <div class="col-md-6">
+        <div class="col-md-8 mx-auto mt-5">
             <div class="card shadow-sm border-0 rounded-4">
                 <div class="card-body">
-                    <h5 class="card-title fw-semibold mb-4">📝 GE Subject Requests</h5>
+                    <h5 class="card-title fw-semibold mb-4 text-center">📝 GE Subject Requests</h5>
                     @if($pendingRequests->isNotEmpty())
                         <div class="table-responsive">
                             <table class="table table-hover">
@@ -80,6 +80,7 @@
                                             <td>{{ $request->department->name }}</td>
                                             <td>{{ $request->request_reason }}</td>
                                             <td>
+                                                <div class="d-flex gap-2 justify-content-center">
                                                     <form action="{{ route('ge-coordinator.ge-requests.approve', $request->id) }}" method="POST" class="d-inline">
                                                         @csrf
                                                         <button type="submit" class="btn btn-sm btn-success" title="Approve">
@@ -92,20 +93,21 @@
                                                             <i class="fas fa-times"></i>
                                                         </button>
                                                     </form>
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
                             </table>
                         </div>
-                        <div class="text-end mt-3">
-                            <a href="{{ route('ge-coordinator.ge-requests') }}" class="btn btn-outline-primary btn-sm">
-                                View All Requests <i class="fas fa-arrow-right ms-1"></i>
+                        <div class="text-center mt-3">
+                            <a href="{{ route('ge-coordinator.ge-requests') }}" class="btn btn-primary btn-sm">
+                                View All Requests
                             </a>
                         </div>
                     @else
-                        <div class="text-center py-4">
-                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
                             <p class="text-muted">No pending GE subject requests</p>
                         </div>
                     @endif

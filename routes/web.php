@@ -166,14 +166,14 @@ Route::prefix('ge-coordinator')
     ->name('ge-coordinator.')
     ->group(function () {
         // GE Subject Requests
-        Route::get('/ge-requests', [GECoordinatorController::class, 'showGERequests'])->name('showGERequests');
+        Route::get('/ge-requests', [GECoordinatorController::class, 'manageGERequests'])->name('ge-coordinator.ge-requests');
         Route::post('/requests/approve/{id}', [GECoordinatorController::class, 'approveGERequest'])->name('approveGERequest');
         Route::post('/requests/reject/{id}', [GECoordinatorController::class, 'rejectGERequest'])->name('rejectGERequest');
         
         Route::get('/dashboard', [GECoordinatorController::class, 'dashboard'])->name('dashboard');
         Route::get('/instructors', [GECoordinatorController::class, 'manageInstructors'])->name('manageInstructors');
         Route::get('/grades', [GECoordinatorController::class, 'viewGrades'])->name('viewGrades');
-        Route::post('/instructors/{id}/approve', [GECoordinatorController::class, 'approveInstructor'])->name('approveInstructor');
+        Route::post('/instructors/{id}/approve', [GECoordinatorController::class, 'approveInstructor'])->name('ge-coordinator.instructors.approve');
         
         // GE Subjects Assignment
         Route::get('/assign-subjects', [GECoordinatorController::class, 'assignSubjects'])->name('assign.subjects');
@@ -283,8 +283,8 @@ Route::prefix('ge-coordinator')
         Route::get('/subjects/{subject}/edit', [GECoordinatorController::class, 'editSubject'])->name('subjects.edit');
         Route::put('/subjects/{subject}', [GECoordinatorController::class, 'updateSubject'])->name('subjects.update');
         Route::match(['post', 'delete'], '/instructors/{id}/reject', [GECoordinatorController::class, 'rejectInstructor'])->name('instructors.reject');
-        Route::patch('/instructors/deactivate/{id}', [GECoordinatorController::class, 'deactivateInstructor'])->name('instructors.deactivate');
-        Route::patch('/instructors/activate/{id}', [GECoordinatorController::class, 'activateInstructor'])->name('instructors.activate');
+        Route::post('/instructors/{id}/deactivate', [GECoordinatorController::class, 'deactivateGEInstructor'])->name('instructors.deactivate');
+        Route::post('/instructors/{id}/activate', [GECoordinatorController::class, 'activateGEInstructor'])->name('instructors.activate');
     });
 
 // Auth Routes (Breeze/Fortify)

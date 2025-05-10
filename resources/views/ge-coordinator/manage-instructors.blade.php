@@ -48,23 +48,23 @@
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center gap-2">
                                         @if($instructor->is_active)
-                                        <button type="button"
-                                            class="btn btn-danger btn-sm d-inline-flex align-items-center gap-1"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#confirmDeactivateModal"
-                                            data-instructor-id="{{ $instructor->id }}"
-                                            data-instructor-name="{{ $instructor->last_name }}, {{ $instructor->first_name }}">
-                                            <i class="bi bi-person-dash-fill"></i> Deactivate
-                                        </button>
+                                            <button type="button"
+                                                class="btn btn-danger btn-sm d-inline-flex align-items-center gap-1"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#confirmDeactivateModal"
+                                                data-instructor-id="{{ $instructor->id }}"
+                                                data-instructor-name="{{ $instructor->last_name }}, {{ $instructor->first_name }}">
+                                                <i class="bi bi-person-dash-fill"></i> Deactivate
+                                            </button>
                                         @else
-                                        <button type="button"
-                                            class="btn btn-success btn-sm d-inline-flex align-items-center gap-1"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#confirmActivateModal"
-                                            data-instructor-id="{{ $instructor->id }}"
-                                            data-instructor-name="{{ $instructor->last_name }}, {{ $instructor->first_name }}">
-                                            <i class="bi bi-person-check-fill"></i> Activate
-                                        </button>
+                                            <button type="button"
+                                                class="btn btn-success btn-sm d-inline-flex align-items-center gap-1"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#confirmActivateModal"
+                                                data-instructor-id="{{ $instructor->id }}"
+                                                data-instructor-name="{{ $instructor->last_name }}, {{ $instructor->first_name }}">
+                                                <i class="bi bi-person-check-fill"></i> Activate
+                                            </button>
                                         @endif
                                     </div>
                                 </td>
@@ -101,12 +101,14 @@
                                 <td>{{ $pending->email }}</td>
                                 <td>{{ $pending->department->department_name ?? 'N/A' }}</td>
                                 <td class="text-center">
-                                    <form action="{{ route('ge-coordinator.instructors.approve', $pending) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-success btn-sm d-inline-flex align-items-center gap-1">
-                                            <i class="bi bi-check-circle-fill"></i> Approve
-                                        </button>
-                                    </form>
+                                    <button type="button"
+                                            class="btn btn-success btn-sm d-inline-flex align-items-center gap-1"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#confirmApproveModal"
+                                            data-id="{{ $pending->id }}"
+                                            data-name="{{ $pending->last_name }}, {{ $pending->first_name }} {{ $pending->middle_name ?? '' }}">
+                                        <i class="bi bi-check-circle-fill"></i> Approve
+                                    </button>
                                     <form action="{{ route('ge-coordinator.instructors.reject', $pending) }}" method="POST" class="d-inline ms-1">
                                         @csrf
                                         @method('DELETE')
@@ -131,84 +133,105 @@
         @endif
     </section>
 
+    {{-- Deactivate Confirmation Modal --}}
+    <div class="modal fade" id="confirmDeactivateModal" tabindex="-1" aria-labelledby="confirmDeactivateModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form id="deactivateForm" method="POST">
+                @csrf
+                <div class="modal-content rounded-4 shadow">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="confirmDeactivateModalLabel">Confirm Account Deactivation</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to deactivate <strong id="instructorName"></strong>'s account?
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Deactivate</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
-</div>
-
-{{-- Deactivate Confirmation Modal --}}
-<div class="modal fade" id="confirmDeactivateModal" tabindex="-1" aria-labelledby="confirmDeactivateModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <form id="deactivateForm" method="POST">
-            @csrf
-            @method('PATCH')
-            <div class="modal-content rounded-4 shadow">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="confirmDeactivateModalLabel">Confirm Account Deactivation</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    {{-- Activate Confirmation Modal --}}
+    <div class="modal fade" id="confirmActivateModal" tabindex="-1" aria-labelledby="confirmActivateModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form id="activateForm" method="POST">
+                @csrf
+                <div class="modal-content rounded-4 shadow">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title" id="confirmActivateModalLabel">Confirm Account Activation</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to activate <strong id="activateName"></strong>'s account?
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Activate</button>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    Are you sure you want to deactivate <strong id="instructorName"></strong>'s account?
-                </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Deactivate</button>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
 
-{{-- Activate Confirmation Modal --}}
-<div class="modal fade" id="confirmActivateModal" tabindex="-1" aria-labelledby="confirmActivateModalLabel" aria-hidden="true">
+{{-- Approve Confirmation Modal --}}
+<div class="modal fade" id="confirmApproveModal" tabindex="-1" aria-labelledby="confirmApproveModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="confirmActivateModalLabel">Activate Instructor</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <form method="POST" id="approveForm">
+            @csrf
+            <input type="hidden" name="_method" value="POST">
+            <div class="modal-content rounded-4 shadow">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="confirmApproveModalLabel">Confirm Approval</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to approve <strong id="approveName"></strong>'s account?
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Approve</button>
+                </div>
             </div>
-            <div class="modal-body">
-                <p>Are you sure you want to activate this instructor?</p>
-                <p class="fw-bold" id="activateInstructorName"></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form action="{{ route('ge-coordinator.instructors.activate', ['id' => $instructor->id]) }}" method="POST" class="d-inline">
-                    @csrf
-                    <button type="submit" class="btn btn-success">Activate</button>
-                </form>
-            </div>
-        </div>
+        </form>
     </div>
 </div>
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Deactivate modal
-        const deactivateModal = document.getElementById('confirmDeactivateModal');
-        if (deactivateModal) {
-            deactivateModal.addEventListener('show.bs.modal', function (event) {
-                const button = event.relatedTarget;
-                const instructorId = button.getAttribute('data-instructor-id');
-                const instructorName = button.getAttribute('data-instructor-name');
-                
-                document.getElementById('deactivateInstructorId').value = instructorId;
-                document.getElementById('deactivateInstructorName').textContent = instructorName;
-            });
-        }
+    const approveModal = document.getElementById('confirmApproveModal');
+    const deactivateModal = document.getElementById('confirmDeactivateModal');
+    const activateModal = document.getElementById('confirmActivateModal');
 
-        // Activate modal
-        const activateModal = document.getElementById('confirmActivateModal');
-        if (activateModal) {
-            activateModal.addEventListener('show.bs.modal', function (event) {
-                const button = event.relatedTarget;
-                const instructorId = button.getAttribute('data-instructor-id');
-                const instructorName = button.getAttribute('data-instructor-name');
-                
-                document.getElementById('activateInstructorId').value = instructorId;
-                document.getElementById('activateInstructorName').textContent = instructorName;
-            });
-        }
-    });
+    if (approveModal) {
+        approveModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            document.getElementById('approveForm').action = `/ge-coordinator/instructors/${button.getAttribute('data-id')}/approve`;
+            document.getElementById('approveName').textContent = button.getAttribute('data-name');
+        });
+    }
+
+    if (deactivateModal) {
+        deactivateModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const form = document.getElementById('deactivateForm');
+            form.action = `/ge-coordinator/instructors/${button.getAttribute('data-instructor-id')}/deactivate`;
+            document.getElementById('instructorName').textContent = button.getAttribute('data-instructor-name');
+        });
+    }
+
+    if (activateModal) {
+        activateModal.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const form = document.getElementById('activateForm');
+            form.action = `/ge-coordinator/instructors/${button.getAttribute('data-instructor-id')}/activate`;
+            document.getElementById('activateName').textContent = button.getAttribute('data-instructor-name');
+        });
+    }
 </script>
 @endpush
 @endsection

@@ -104,9 +104,10 @@
 
         <div class="p-4">
             <p>Are you sure you want to assign this subject to an instructor?</p>
-            <form id="assignForm" method="POST" action="{{ route('chairperson.storeAssignedSubject') }}" class="vstack gap-3">
+            <form id="assignForm" method="POST" action="{{ route('chairperson.toggleAssignedSubject') }}" class="vstack gap-3">
                 @csrf
                 <input type="hidden" name="subject_id" id="assign_subject_id">
+                <input type="hidden" name="instructor_id" id="assign_instructor_id">
                 <div>
                     <label class="form-label">Select Instructor</label>
                     <select name="instructor_id" class="form-select" required>
